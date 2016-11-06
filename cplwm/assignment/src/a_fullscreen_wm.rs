@@ -405,6 +405,10 @@ mod tests {
         height: 600,
     };
 
+	static SCREEN2: Screen = Screen {
+        width: 1000,
+        height: 800,
+    };
     // We define a static variable for the geometry of a fullscreen window.
     // Note that it matches the dimensions of `SCREEN`.
     static SCREEN_GEOM: Geometry = Geometry {
@@ -491,4 +495,140 @@ mod tests {
         // To learn more about testing, check the Testing chapter of the Rust
         // Book: https://doc.rust-lang.org/book/testing.html
     }
+
+    #[test]
+    fn test_focus_window() {
+
+        let mut wm = FullscreenWM::new(SCREEN);
+
+        //Add some windows
+        wm.add_window(WindowWithInfo::new_tiled(1, SOME_GEOM)).unwrap();
+        wm.add_window(WindowWithInfo::new_tiled(2, SOME_GEOM)).unwrap();
+        wm.add_window(WindowWithInfo::new_tiled(3, SOME_GEOM)).unwrap();
+        wm.add_window(WindowWithInfo::new_tiled(4, SOME_GEOM)).unwrap();
+        wm.add_window(WindowWithInfo::new_tiled(5, SOME_GEOM)).unwrap();
+
+        //No action is done
+        wm.focus_window(None).unwrap();
+
+        //Focus should be kept in window 5, since was the last insertion
+        let wl1 = wm.get_window_layout();
+        assert_eq!(Some(5), wl1.focused_window);
+        
+        //Window 10 is not in manager an UnknownWindow error should be thrown
+        assert!(wm.focus_window(Some(10)).is_err());
+
+        //Focus to window 4
+        wm.focus_window(Some(4)).unwrap();
+        let wl2 = wm.get_window_layout();
+        assert_eq!(Some(4), wl2.focused_window);
+
+		//Focus to window 2
+        wm.focus_window(Some(2)).unwrap();
+        let wl3 = wm.get_window_layout();
+        assert_eq!(Some(2), wl3.focused_window);
+
+        //Focus to window 5
+        wm.focus_window(Some(5)).unwrap();
+        let wl4 = wm.get_window_layout();
+        assert_eq!(Some(5), wl4.focused_window);
+    }
+
+    #[test]
+    fn test_cycle_focus() {
+
+        let mut wm = FullscreenWM::new(SCREEN);
+
+        //Do nothing
+        wm.cycle_focus(PrevOrNext::Next);
+
+        //Add some windows
+        wm.add_window(WindowWithInfo::new_tiled(1, SOME_GEOM)).unwrap();
+        wm.add_window(WindowWithInfo::new_tiled(2, SOME_GEOM)).unwrap();
+        wm.add_window(WindowWithInfo::new_tiled(3, SOME_GEOM)).unwrap();
+        wm.add_window(WindowWithInfo::new_tiled(4, SOME_GEOM)).unwrap();
+        wm.add_window(WindowWithInfo::new_tiled(5, SOME_GEOM)).unwrap();
+
+
+        //Focus should be in window 4
+        wm.cycle_focus(PrevOrNext::Prev);
+        let wl1 = wm.get_window_layout();
+        assert_eq!(Some(4), wl1.focused_window);
+
+        //Focus should be in window 3
+        wm.cycle_focus(PrevOrNext::Prev);
+        let wl2 = wm.get_window_layout();
+        assert_eq!(Some(3), wl2.focused_window);
+
+		//Focus should be in window 4
+        wm.cycle_focus(PrevOrNext::Next);
+        let wl3 = wm.get_window_layout();
+        assert_eq!(Some(4), wl3.focused_window);
+
+        //Focus should be in window 5
+        wm.cycle_focus(PrevOrNext::Next);
+        let wl4 = wm.get_window_layout();
+        assert_eq!(Some(5), wl4.focused_window);
+
+        //Focus should be in window 1
+        wm.cycle_focus(PrevOrNext::Next);
+        let wl4 = wm.get_window_layout();
+        assert_eq!(Some(1), wl4.focused_window);
+
+        //Focus should be in window 2
+        wm.cycle_focus(PrevOrNext::Next);
+        let wl5 = wm.get_window_layout();
+        assert_eq!(Some(2), wl5.focused_window);
+
+		//Focus should be in window 6
+        wm.add_window(WindowWithInfo::new_tiled(6, SOME_GEOM)).unwrap();
+        let wl6 = wm.get_window_layout();
+        assert_eq!(Some(6), wl6.focused_window);
+
+        //Focus should be in window 2
+        wm.cycle_focus(PrevOrNext::Prev);
+        let wl7 = wm.get_window_layout();
+        assert_eq!(Some(2), wl7.focused_window);
+
+    }
+
+     #[test]
+    fn test_get_window_info() {
+
+        let mut wm = FullscreenWM::new(SCREEN);
+
+        //Add some windows
+        wm.add_window(WindowWithInfo::new_tiled(1, SOME_GEOM)).unwrap();
+        wm.add_window(WindowWithInfo::new_tiled(2, SOME_GEOM)).unwrap();
+        wm.add_window(WindowWithInfo::new_tiled(3, SCREEN_GEOM)).unwrap();
+        wm.add_window(WindowWithInfo::new_tiled(4, SOME_GEOM)).unwrap();
+        wm.add_window(WindowWithInfo::new_tiled(5, SCREEN_GEOM)).unwrap();
+
+
+        //screen 1 and 2 should have the smae geometry
+        assert_eq!(wm.get_window_info(1).unwrap().geometry, wm.get_window_info(2).unwrap().geometry);
+
+        //As well as window 3 5
+        assert_eq!(wm.get_window_info(3).unwrap().geometry, wm.get_window_info(5).unwrap().geometry);
+
+		//window 5 has geometry SCREEN_GEOM
+        assert_eq!(SCREEN_GEOM, wm.get_window_info(5).unwrap().geometry);
+
+        //window 1 has geometry SOME_GEOM
+        assert_eq!(SOME_GEOM, wm.get_window_info(1).unwrap().geometry);
+     }
+
+     #[test]
+     fn test_get_resize_screen() {
+
+        let mut wm = FullscreenWM::new(SCREEN);
+
+        //swm screen should be the same as SCREEN
+        assert_eq!(wm.get_screen(), SCREEN);
+
+        //now, swm screen should be the same as SCREEN
+        wm.resize_screen(SCREEN2);
+        assert_eq!(wm.get_screen(), SCREEN2);
+     }
+
 }
