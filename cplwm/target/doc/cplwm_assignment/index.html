@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `cplwm_assignment` crate.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, cplwm_assignment">
+
+    <title>cplwm_assignment - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'></p><script>window.sidebarCurrent = {name: 'cplwm_assignment', ty: 'mod', relpath: '../'};</script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content mod">
+<h1 class='fqn'><span class='in-band'>Crate <a class='mod' href=''>cplwm_assignment</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-0' class='srclink' href='../src/cplwm_assignment/src/lib.rs.html#1-82' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>Root file of your solution</p>
+
+<h1 id='this-file' class='section-header'><a href='#this-file'>This file</a></h1>
+<p>There are two types of projects or <em>crates</em> in Rust: libraries and
+executables. The difference should be obvious. The root of a library
+project is <code>src/lib.rs</code> (like this file) and the root of an executable
+project is <code>src/main.rs</code>.</p>
+
+<p>The root file contains some important things:</p>
+
+<ol>
+<li>It provides some documentation for the crate. You are reading it right
+now.</li>
+<li>It contains annotations that are true for the whole crate. See the
+source code of this file for an example.</li>
+<li>It declares dependencies on external crates. Again, see the source
+code.</li>
+<li>It declares the modules of which the crate consists using the <code>mod</code>
+keyword. Don&#39;t confuse this with the <code>use</code> keyword. If you add any
+modules to this project, you have to declare them at the end of this
+file using the <code>mod</code> keyword. Unless they are submodules of another
+module, in which case you have to declare them at the top of that
+module. In case you want them to be public (and visible in the
+documentation too), use <code>pub mod</code> instead of <code>mod</code>.</li>
+</ol>
+
+<p>See the chapter on <a href="https://doc.rust-lang.org/book/crates-and-modules.html">Crates and Modules</a> in the Rust
+book for more information.</p>
+
+<p>The source code of this file contains more information.</p>
+
+<p>If you are looking at the documentation of this file, the list on the left
+side contains all the crates that this crate transitively depends on.</p>
+
+<p>The next thing to look at is the <a href="a_fullscreen_wm/index.html"><code>a_fullscreen_wm</code>
+module</a>.</p>
+
+<h1 id='rust-version' class='section-header'><a href='#rust-version'>Rust Version</a></h1>
+<p><strong>TODO</strong>: indicate which version of Rust you are using. If you are using
+1.12.1, you don&#39;t have to do anything. Otherwise, replace the version
+below with the output of <code>rustc --version</code>.</p>
+
+<p>VERSION: rustc 1.12.1 (d4f39402a 2016-10-19)</p>
+
+<p>If you are using a nightly as opposed to a stable version of Rust, explain
+why below:</p>
+
+<p>...</p>
+</div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class='mod' href='a_fullscreen_wm/index.html'
+                                  title='cplwm_assignment::a_fullscreen_wm'>a_fullscreen_wm</a></td>
+                           <td class='docblock short'>
+                                <p>Fullscreen Window Manager</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='mod' href='b_tiling_wm/index.html'
+                                  title='cplwm_assignment::b_tiling_wm'>b_tiling_wm</a></td>
+                           <td class='docblock short'>
+                                <p>Tiling Window Manager</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='mod' href='c_floating_windows/index.html'
+                                  title='cplwm_assignment::c_floating_windows'>c_floating_windows</a></td>
+                           <td class='docblock short'>
+                                <p>Floating Windows</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='mod' href='d_minimising_windows/index.html'
+                                  title='cplwm_assignment::d_minimising_windows'>d_minimising_windows</a></td>
+                           <td class='docblock short'>
+                                <p>Minimising Windows</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='mod' href='e_fullscreen_windows/index.html'
+                                  title='cplwm_assignment::e_fullscreen_windows'>e_fullscreen_windows</a></td>
+                           <td class='docblock short'>
+                                <p>Optional: Fullscreen Windows</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='mod' href='f_gaps/index.html'
+                                  title='cplwm_assignment::f_gaps'>f_gaps</a></td>
+                           <td class='docblock short'>
+                                <p>Optional: Gaps</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='mod' href='g_multiple_workspaces/index.html'
+                                  title='cplwm_assignment::g_multiple_workspaces'>g_multiple_workspaces</a></td>
+                           <td class='docblock short'>
+                                <p>Optional: Multiple Workspaces</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='mod' href='h_different_tiling_layout/index.html'
+                                  title='cplwm_assignment::h_different_tiling_layout'>h_different_tiling_layout</a></td>
+                           <td class='docblock short'>
+                                <p>Optional: Different Tiling Layout</p>
+                           </td>
+                       </tr></table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "cplwm_assignment";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

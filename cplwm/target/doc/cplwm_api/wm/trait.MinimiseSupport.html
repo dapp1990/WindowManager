@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `MinimiseSupport` trait in crate `cplwm_api`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, MinimiseSupport">
+
+    <title>cplwm_api::wm::MinimiseSupport - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='../index.html'>cplwm_api</a>::<wbr><a href='index.html'>wm</a></p><script>window.sidebarCurrent = {name: 'MinimiseSupport', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content trait">
+<h1 class='fqn'><span class='in-band'>Trait <a href='../index.html'>cplwm_api</a>::<wbr><a href='index.html'>wm</a>::<wbr><a class='trait' href=''>MinimiseSupport</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-551' class='srclink' href='../../src/cplwm_api/wm.rs.html#544-594' title='goto source code'>[src]</a></span></h1>
+<pre class='rust trait'>pub trait MinimiseSupport: <a class='trait' href='../../cplwm_api/wm/trait.WindowManager.html' title='cplwm_api::wm::WindowManager'>WindowManager</a> {
+    fn <a href='#tymethod.get_minimised_windows' class='fnname'>get_minimised_windows</a>(&amp;self) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='type' href='../../cplwm_api/types/type.Window.html' title='cplwm_api::types::Window'>Window</a>&gt;;
+    fn <a href='#tymethod.toggle_minimised' class='fnname'>toggle_minimised</a>(&amp;mut self, window: <a class='type' href='../../cplwm_api/types/type.Window.html' title='cplwm_api::types::Window'>Window</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>,&nbsp;Self::Error&gt;;
+
+    fn <a href='#method.is_minimised' class='fnname'>is_minimised</a>(&amp;self, window: <a class='type' href='../../cplwm_api/types/type.Window.html' title='cplwm_api::types::Window'>Window</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a> { ... }
+}</pre><div class='docblock'><p>A window manager that supports (un)minimising windows.</p>
+
+<p>Remember that a tiling window manager displays each window in a different
+tile. So when you have opened ten applications, the screen will be split
+in ten tiles. Sometimes you want to open an application without having to
+look at it the whole time
+(<a href="trait.MultiWorkspaceSupport.html"><code>MultiWorkspaceSupport</code></a> is also
+useful for this scenario). In that case, <em>minimising</em> the window is the
+solution: you can temporarily hide the window and regain the screen space
+without having to close the window.</p>
+
+<p>Naturally, there is also a way to reveal these windows again by
+<em>unminimising</em> them.</p>
+
+<p><strong>Note</strong>: methods of other traits like <code>focus_window</code>, <code>focus_window</code>,
+<code>toggle_fullscreen</code>, ... called with a minimised window as argument should
+first unminimise the window.</p>
+
+<p><strong>Hint</strong>: you can use <code>remove_window</code> and <code>add_window</code> to hide and reveal
+windows.</p>
+</div>
+            <h2 id='required-methods'>Required Methods</h2>
+            <div class='methods'>
+        <h3 id='tymethod.get_minimised_windows' class='method stab '><code>fn <a href='#tymethod.get_minimised_windows' class='fnname'>get_minimised_windows</a>(&amp;self) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='type' href='../../cplwm_api/types/type.Window.html' title='cplwm_api::types::Window'>Window</a>&gt;</code></h3><div class='docblock'><p>Return a vector of all the minimised windows.</p>
+
+<p>The order of the windows in the vector <em>does</em> matter.</p>
+
+<p>The windows must occur in the order they were minimised: the window
+that was minimised first must occur first in the vector, the window
+that was minimised last must occur last. This makes it easy to define
+a function that unminimises the last minimised window.</p>
+</div><h3 id='tymethod.toggle_minimised' class='method stab '><code>fn <a href='#tymethod.toggle_minimised' class='fnname'>toggle_minimised</a>(&amp;mut self, window: <a class='type' href='../../cplwm_api/types/type.Window.html' title='cplwm_api::types::Window'>Window</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>,&nbsp;Self::Error&gt;</code></h3><div class='docblock'><p>Minimise the given window, or when it is already minimised, unminise
+it.</p>
+
+<p>When a minimised floating window is unminimised, it should float again
+and have the same geometry as before. Hint: you could use the
+<code>float_or_tile</code> field of <code>WindowWithInfo</code>. Analogously for fullscreen
+windows.</p>
+
+<p><strong>Invariant</strong>: if calling <code>toggle_minimised(w)</code> with an unminimised
+window <code>w</code> succeeds, <code>w</code> may no longer be visible according to
+<code>get_window_layout</code> and <code>is_minimised(w)</code> must return <code>true</code>.</p>
+
+<p><strong>Invariant</strong>: if calling <code>toggle_minimised(w)</code> with an already
+minimised window <code>w</code> succeeds, <code>w</code> must be visible according to
+<code>get_window_layout</code> and <code>is_minimised(w)</code> must return <code>false</code>.</p>
+
+<p>The window layout before and after minimising and directly
+unminimising the currently focused window should be the same. This
+cannot hold for a window manager that implements
+<a href="trait.TilingSupport.html"><code>TilingSupport</code></a>. Try to figure out why.</p>
+</div></div>
+            <h2 id='provided-methods'>Provided Methods</h2>
+            <div class='methods'>
+        <h3 id='method.is_minimised' class='method stab '><code>fn <a href='#method.is_minimised' class='fnname'>is_minimised</a>(&amp;self, window: <a class='type' href='../../cplwm_api/types/type.Window.html' title='cplwm_api::types::Window'>Window</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h3><div class='docblock'><p>Return <code>true</code> if the given window is minimised.</p>
+
+<p>This function must always return false when the given window is not
+managed by the window manager.</p>
+
+<p><strong>Invariant</strong>: if <code>is_minimised(w) == true</code> for some window <code>w</code>, then
+<code>is_managed(w) == true</code>.</p>
+
+<p><strong>Invariant</strong>: <code>is_minimised(w) == true</code> for some window <code>w</code>, iff the
+vector returned by the <code>get_minised_windows</code> method contains <code>w</code>.</p>
+
+<p>A default implementation is provided in terms of
+<code>get_minimised_windows()</code>. Override this implementation if you have a
+more efficient one.</p>
+</div></div>
+        <h2 id='implementors'>Implementors</h2>
+        <ul class='item-list' id='implementors-list'>
+    </ul><script type="text/javascript" async
+                         src="../../implementors/cplwm_api/wm/trait.MinimiseSupport.js">
+                 </script></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "cplwm_api";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
+    
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

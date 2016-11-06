@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `FullscreenWM` struct in crate `cplwm_assignment`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, FullscreenWM">
+
+    <title>cplwm_assignment::a_fullscreen_wm::FullscreenWM - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='../index.html'>cplwm_assignment</a>::<wbr><a href='index.html'>a_fullscreen_wm</a></p><script>window.sidebarCurrent = {name: 'FullscreenWM', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content struct">
+<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>cplwm_assignment</a>::<wbr><a href='index.html'>a_fullscreen_wm</a>::<wbr><a class='struct' href=''>FullscreenWM</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-49' class='srclink' href='../../src/cplwm_assignment/src/a_fullscreen_wm.rs.html#97-103' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct FullscreenWM {
+    pub windows: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='type' href='../../cplwm_api/types/type.Window.html' title='cplwm_api::types::Window'>Window</a>&gt;,
+    pub screen: <a class='struct' href='../../cplwm_api/types/struct.Screen.html' title='cplwm_api::types::Screen'>Screen</a>,
+}</pre><div class='docblock'><p>The FullscreenWM struct</p>
+
+<p>The first thing to do when writing a window manager, is to define a struct
+(or enum) that will contain the state of the window manager, e.g. the
+managed windows along with their geometries, the focused window, etc.</p>
+
+<p>Depending on the layout and the functionality the window manager provides,
+this can vary from simple <code>Vec</code>s to trees, hashmaps, etc. You can have a
+look at the <a href="https://doc.rust-lang.org/std/collections/">collections</a> Rust
+provides.</p>
+
+<p>Remember that you are free to add additional dependencies to your project,
+e.g., for another type of data structure. But this is certainly not
+required. For more information, see the Hints &amp; Tricks section of the
+assignment.</p>
+
+<h1 id='example-representation' class='section-header'><a href='#example-representation'>Example Representation</a></h1>
+<p>The fullscreen window manager that we are implementing is very simple: it
+just needs to keep track of all the windows that were added and remember
+which one is focused. It is not even necessary to remember the geometries
+of the windows, as they will all be resized to the size of the screen.</p>
+
+<p>A possible data structure to keep track of the windows is a simple <code>Vec</code>:
+the last element in the vector is the window on top, which is also the
+only window to display. Why not the first element? Because it is easier to
+add an element to the end of a vector. This is convenient, as adding a new
+window should also put it on top of the other windows.</p>
+
+<p>Another thing we need to keep track of is the <code>Screen</code>, because we must
+resize the windows the size of the screen. A <code>Screen</code> is passed via the
+<code>new</code> method of the trait and the <code>resize_screen</code> method of the trait
+updates the screen with a new one.</p>
+
+<p>These two fields are enough to get started, which does not mean that they
+are enough to correctly implement this window manager. As you will notice
+in a short while, there is a problem with this representation. Feel free
+to add/replace/remove fields.</p>
+
+<p>To understand the <code>#derive[(..)]</code> line before the struct, read the
+<a href="../../cplwm_api/wm/trait.WindowManager.html#supertraits">Supertraits</a> section of the <code>WindowManager</code> trait.</p>
+</div><h2 class='fields'>Fields</h2><span id='structfield.windows' class='structfield'><code>windows: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='type' href='../../cplwm_api/types/type.Window.html' title='cplwm_api::types::Window'>Window</a>&gt;</code>
+                           </span><span class='stab '></span><div class='docblock'><p>A vector of windows, the first one is on the bottom, the last one is
+on top, and also the only visible window.</p>
+</div><span id='structfield.screen' class='structfield'><code>screen: <a class='struct' href='../../cplwm_api/types/struct.Screen.html' title='cplwm_api::types::Screen'>Screen</a></code>
+                           </span><span class='stab '></span><div class='docblock'><p>We need to know which size the fullscreen window must be.</p>
+</div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../../cplwm_assignment/a_fullscreen_wm/struct.FullscreenWM.html' title='cplwm_assignment::a_fullscreen_wm::FullscreenWM'>FullscreenWM</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-12' class='srclink' href='../../src/cplwm_assignment/src/a_fullscreen_wm.rs.html#96' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#tymethod.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../cplwm_assignment/a_fullscreen_wm/struct.FullscreenWM.html' title='cplwm_assignment::a_fullscreen_wm::FullscreenWM'>FullscreenWM</a></code></h4>
+<div class='docblock'><p>Returns a copy of the value. <a href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#tymethod.clone">Read more</a></p>
+</div><h4 id='method.clone_from' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code><div class='since' title='Stable since Rust version 1.0.0'>1.0.0</div></h4>
+<div class='docblock'><p>Performs copy-assignment from <code>source</code>. <a href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from">Read more</a></p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='struct' href='../../cplwm_assignment/a_fullscreen_wm/struct.FullscreenWM.html' title='cplwm_assignment::a_fullscreen_wm::FullscreenWM'>FullscreenWM</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-17' class='srclink' href='../../src/cplwm_assignment/src/a_fullscreen_wm.rs.html#96' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+<div class='docblock'><p>Formats the value using the given formatter.</p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='../../rustc_serialize/serialize/trait.Encodable.html' title='rustc_serialize::serialize::Encodable'>Encodable</a> for <a class='struct' href='../../cplwm_assignment/a_fullscreen_wm/struct.FullscreenWM.html' title='cplwm_assignment::a_fullscreen_wm::FullscreenWM'>FullscreenWM</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-24' class='srclink' href='../../src/cplwm_assignment/src/a_fullscreen_wm.rs.html#96' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.encode' class='method'><code>fn <a href='../../rustc_serialize/serialize/trait.Encodable.html#tymethod.encode' class='fnname'>encode</a>&lt;__S:&nbsp;<a class='trait' href='../../rustc_serialize/serialize/trait.Encoder.html' title='rustc_serialize::serialize::Encoder'>Encoder</a>&gt;(&amp;self, __arg_0: &amp;mut __S) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>,&nbsp;__S::Error&gt;</code></h4>
+</div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='../../rustc_serialize/serialize/trait.Decodable.html' title='rustc_serialize::serialize::Decodable'>Decodable</a> for <a class='struct' href='../../cplwm_assignment/a_fullscreen_wm/struct.FullscreenWM.html' title='cplwm_assignment::a_fullscreen_wm::FullscreenWM'>FullscreenWM</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-39' class='srclink' href='../../src/cplwm_assignment/src/a_fullscreen_wm.rs.html#96' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.decode' class='method'><code>fn <a href='../../rustc_serialize/serialize/trait.Decodable.html#tymethod.decode' class='fnname'>decode</a>&lt;__D:&nbsp;<a class='trait' href='../../rustc_serialize/serialize/trait.Decoder.html' title='rustc_serialize::serialize::Decoder'>Decoder</a>&gt;(__arg_0: &amp;mut __D) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='struct' href='../../cplwm_assignment/a_fullscreen_wm/struct.FullscreenWM.html' title='cplwm_assignment::a_fullscreen_wm::FullscreenWM'>FullscreenWM</a>,&nbsp;__D::Error&gt;</code></h4>
+</div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='../../cplwm_api/wm/trait.WindowManager.html' title='cplwm_api::wm::WindowManager'>WindowManager</a> for <a class='struct' href='../../cplwm_assignment/a_fullscreen_wm/struct.FullscreenWM.html' title='cplwm_assignment::a_fullscreen_wm::FullscreenWM'>FullscreenWM</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-71' class='srclink' href='../../src/cplwm_assignment/src/a_fullscreen_wm.rs.html#145-275' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='associatedtype.Error' class='type'><code>type <a href='../../cplwm_api/wm/trait.WindowManager.html#associatedtype.Error' class='type'>Error</a> = <a class='enum' href='../../cplwm_assignment/a_fullscreen_wm/enum.FullscreenWMError.html' title='cplwm_assignment::a_fullscreen_wm::FullscreenWMError'>FullscreenWMError</a></code></h4>
+<div class='docblock'><p>We use <code>FullscreenWMError</code> as our <code>Error</code> type.</p>
+</div><h4 id='method.new' class='method'><code>fn <a href='../../cplwm_api/wm/trait.WindowManager.html#tymethod.new' class='fnname'>new</a>(screen: <a class='struct' href='../../cplwm_api/types/struct.Screen.html' title='cplwm_api::types::Screen'>Screen</a>) -&gt; <a class='struct' href='../../cplwm_assignment/a_fullscreen_wm/struct.FullscreenWM.html' title='cplwm_assignment::a_fullscreen_wm::FullscreenWM'>FullscreenWM</a></code></h4>
+<div class='docblock'><p>The constructor is straightforward.</p>
+
+<p>Track the given screen and make a new empty <code>Vec</code>.</p>
+</div><h4 id='method.get_windows' class='method'><code>fn <a href='../../cplwm_api/wm/trait.WindowManager.html#tymethod.get_windows' class='fnname'>get_windows</a>(&amp;self) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='type' href='../../cplwm_api/types/type.Window.html' title='cplwm_api::types::Window'>Window</a>&gt;</code></h4>
+<div class='docblock'><p>The <code>windows</code> field contains all the windows we manage.</p>
+
+<p>Why do we need a <code>clone</code> here?</p>
+</div><h4 id='method.get_focused_window' class='method'><code>fn <a href='../../cplwm_api/wm/trait.WindowManager.html#method.get_focused_window' class='fnname'>get_focused_window</a>(&amp;self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='type' href='../../cplwm_api/types/type.Window.html' title='cplwm_api::types::Window'>Window</a>&gt;</code></h4>
+<div class='docblock'><p>The last window in the list is the focused one.</p>
+
+<p>Note that the <code>last</code> method of <code>Vec</code> returns an <code>Option</code>.</p>
+</div><h4 id='method.add_window' class='method'><code>fn <a href='../../cplwm_api/wm/trait.WindowManager.html#tymethod.add_window' class='fnname'>add_window</a>(&amp;mut self, window_with_info: <a class='struct' href='../../cplwm_api/types/struct.WindowWithInfo.html' title='cplwm_api::types::WindowWithInfo'>WindowWithInfo</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>,&nbsp;Self::Error&gt;</code></h4>
+<div class='docblock'><p>To add a window, just push it onto the end the <code>windows</code> <code>Vec</code>.</p>
+
+<p>We could choose to return an error when the window is already managed
+by the window manager, but in this case we just do nothing. You are
+free to define another error to handle this case.</p>
+
+<p>Note that we completely ignore the information that comes along with
+the info, this <em>could</em> lead to issues in later assignments.</p>
+</div><h4 id='method.remove_window' class='method'><code>fn <a href='../../cplwm_api/wm/trait.WindowManager.html#tymethod.remove_window' class='fnname'>remove_window</a>(&amp;mut self, window: <a class='type' href='../../cplwm_api/types/type.Window.html' title='cplwm_api::types::Window'>Window</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>,&nbsp;Self::Error&gt;</code></h4>
+<div class='docblock'><p>To remove a window, just remove it from the <code>windows</code> <code>Vec</code>.</p>
+
+<p>First we look up the position (or index) of the window in <code>windows</code>,
+and then remove it unless the window does not occur in the <code>Vec</code>, in
+which case we return an error.</p>
+</div><h4 id='method.get_window_layout' class='method'><code>fn <a href='../../cplwm_api/wm/trait.WindowManager.html#tymethod.get_window_layout' class='fnname'>get_window_layout</a>(&amp;self) -&gt; <a class='struct' href='../../cplwm_api/types/struct.WindowLayout.html' title='cplwm_api::types::WindowLayout'>WindowLayout</a></code></h4>
+<div class='docblock'><p>Now the most important part: calculating the <code>WindowLayout</code>.</p>
+
+<p>First we build a <code>Geometry</code> for a fullscreen window using the
+<code>to_geometry</code> method: it has the same width and height as the screen.</p>
+
+<p>Then we look at the last window, remember that the <code>last()</code> method of
+<code>Vec</code> returns an <code>Option</code>.</p>
+
+<ul>
+<li><p>When the <code>Option</code> contains <code>Some(w)</code>, we know that there was at
+least one window, and <code>w</code>, being the last window in the <code>Vec</code> should
+be focused. As the other windows will not be visible, the <code>windows</code>
+field of <code>WindowLayout</code> can just be a <code>Vec</code> with one element: the
+one window along with the fullscreen <code>Geometry</code>.</p></li>
+<li><p>When the <code>Option</code> is <code>None</code>, we know that there are no windows, so
+we can just return an empty <code>WindowLayout</code>.</p></li>
+</ul>
+</div><h4 id='method.focus_window' class='method'><code>fn <a href='../../cplwm_api/wm/trait.WindowManager.html#tymethod.focus_window' class='fnname'>focus_window</a>(&amp;mut self, window: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='type' href='../../cplwm_api/types/type.Window.html' title='cplwm_api::types::Window'>Window</a>&gt;) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>,&nbsp;Self::Error&gt;</code></h4>
+<div class='docblock'><p>Try this yourself</p>
+
+<p>Don&#39;t forget that when the argument is <code>None</code>, i.e. no window should
+be focused, <code>get_focused_window()</code> must return <code>None</code> afterwards. The
+<code>focused_window</code> field of the <code>WindowLayout</code> must also be <code>None</code>.</p>
+
+<p>You will probably have to change the code above (method
+implementations as well as the <code>FullscreenWM</code> struct) to achieve this.</p>
+</div><h4 id='method.cycle_focus' class='method'><code>fn <a href='../../cplwm_api/wm/trait.WindowManager.html#tymethod.cycle_focus' class='fnname'>cycle_focus</a>(&amp;mut self, dir: <a class='enum' href='../../cplwm_api/types/enum.PrevOrNext.html' title='cplwm_api::types::PrevOrNext'>PrevOrNext</a>)</code></h4>
+<div class='docblock'><p>Try this yourself</p>
+</div><h4 id='method.get_window_info' class='method'><code>fn <a href='../../cplwm_api/wm/trait.WindowManager.html#tymethod.get_window_info' class='fnname'>get_window_info</a>(&amp;self, window: <a class='type' href='../../cplwm_api/types/type.Window.html' title='cplwm_api::types::Window'>Window</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='struct' href='../../cplwm_api/types/struct.WindowWithInfo.html' title='cplwm_api::types::WindowWithInfo'>WindowWithInfo</a>,&nbsp;Self::Error&gt;</code></h4>
+<div class='docblock'><p>Try this yourself</p>
+</div><h4 id='method.get_screen' class='method'><code>fn <a href='../../cplwm_api/wm/trait.WindowManager.html#tymethod.get_screen' class='fnname'>get_screen</a>(&amp;self) -&gt; <a class='struct' href='../../cplwm_api/types/struct.Screen.html' title='cplwm_api::types::Screen'>Screen</a></code></h4>
+<div class='docblock'><p>Try this yourself</p>
+</div><h4 id='method.resize_screen' class='method'><code>fn <a href='../../cplwm_api/wm/trait.WindowManager.html#tymethod.resize_screen' class='fnname'>resize_screen</a>(&amp;mut self, screen: <a class='struct' href='../../cplwm_api/types/struct.Screen.html' title='cplwm_api::types::Screen'>Screen</a>)</code></h4>
+<div class='docblock'><p>Try this yourself</p>
+</div><h4 id='method.is_managed' class='method'><code>fn <a href='../../cplwm_api/wm/trait.WindowManager.html#method.is_managed' class='fnname'>is_managed</a>(&amp;self, window: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<div class='docblock'><p>Check whether a window is managed by this window manager. <a href="../../cplwm_api/wm/trait.WindowManager.html#method.is_managed">Read more</a></p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "cplwm_assignment";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
+    
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

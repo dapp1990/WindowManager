@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `FullscreenSupport` trait in crate `cplwm_api`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, FullscreenSupport">
+
+    <title>cplwm_api::wm::FullscreenSupport - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='../index.html'>cplwm_api</a>::<wbr><a href='index.html'>wm</a></p><script>window.sidebarCurrent = {name: 'FullscreenSupport', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content trait">
+<h1 class='fqn'><span class='in-band'>Trait <a href='../index.html'>cplwm_api</a>::<wbr><a href='index.html'>wm</a>::<wbr><a class='trait' href=''>FullscreenSupport</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-560' class='srclink' href='../../src/cplwm_api/wm.rs.html#621-648' title='goto source code'>[src]</a></span></h1>
+<pre class='rust trait'>pub trait FullscreenSupport: <a class='trait' href='../../cplwm_api/wm/trait.WindowManager.html' title='cplwm_api::wm::WindowManager'>WindowManager</a> {
+    fn <a href='#tymethod.get_fullscreen_window' class='fnname'>get_fullscreen_window</a>(&amp;self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='type' href='../../cplwm_api/types/type.Window.html' title='cplwm_api::types::Window'>Window</a>&gt;;
+    fn <a href='#tymethod.toggle_fullscreen' class='fnname'>toggle_fullscreen</a>(&amp;mut self, window: <a class='type' href='../../cplwm_api/types/type.Window.html' title='cplwm_api::types::Window'>Window</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>,&nbsp;Self::Error&gt;;
+}</pre><div class='docblock'><p>A window manager that supports fullscreen windows.</p>
+
+<p>Users wishing to watch a video fullscreen, to play a game fullscreen, or
+to view any application fullscreen, can make any window become fullscreen
+using this trait.</p>
+
+<p>There can at most one window be fullscreen at a time.</p>
+
+<p>The backend will detect that some windows want to be fullscreen from the
+start and will set the <code>fullscreen</code> field of <code>WindowWithInfo</code> to <code>true</code> in
+these cases. A window manager implementing this trait should implement the
+<code>add_window</code> method of <code>WindowManager</code> such that these windows will be
+fullscreen after adding them.</p>
+
+<p>A user can make any window fullscreen by using the <code>toggle_fullscreen</code>.</p>
+
+<p>Think carefully about the interaction between a fullscreen window and the
+other traits: when an action is performed on a fullscreen window, should
+it stop being fullscreen? What when an action is performed on another
+window which is not the fullscreen one? In some cases it might make sense
+to keep the window fullscreen (e.g., when another window is removed), in
+some cases maybe not (e.g., when a non-fullscreen window is added). Try to
+make reasonable and consistent choices (keep the invariants of this <em>and</em>
+the other traits in mind). Document the choices and write test cases for
+them.</p>
+</div>
+            <h2 id='required-methods'>Required Methods</h2>
+            <div class='methods'>
+        <h3 id='tymethod.get_fullscreen_window' class='method stab '><code>fn <a href='#tymethod.get_fullscreen_window' class='fnname'>get_fullscreen_window</a>(&amp;self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='type' href='../../cplwm_api/types/type.Window.html' title='cplwm_api::types::Window'>Window</a>&gt;</code></h3><div class='docblock'><p>Return the current fullscreen, if any.</p>
+
+<p><strong>Invariant</strong>: if <code>get_fullscreen_window() == Some(w)</code>, then
+<code>is_managed(w) == true</code>.</p>
+
+<p><strong>Invariant</strong>: if <code>get_fullscreen_window() == Some(w)</code>, then
+<code>get_focused_window() == Some(w)</code>.</p>
+</div><h3 id='tymethod.toggle_fullscreen' class='method stab '><code>fn <a href='#tymethod.toggle_fullscreen' class='fnname'>toggle_fullscreen</a>(&amp;mut self, window: <a class='type' href='../../cplwm_api/types/type.Window.html' title='cplwm_api::types::Window'>Window</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>,&nbsp;Self::Error&gt;</code></h3><div class='docblock'><p>Make the given window fullscreen, or when it is already fullscreen,
+undo it.</p>
+
+<p>When called on a window that is already fullscreen, it should restore
+the window to the state before, e.g. float at the same place.
+<strong>Hint</strong>: you could use the <code>float_or_tile</code> field of <code>WindowWithInfo</code>.</p>
+
+<p><strong>Invariant</strong>: if calling <code>toggle_fullscreen(w)</code> with a window <code>w</code>
+that is not yet fullscreen, <code>w</code> should be the only visible window
+according to <code>get_window_layout</code>, its geometry should be the same size
+as the screen, and <code>get_fullscreen_window(w) == Some(w)</code>.</p>
+
+<p>The window layout before and after calling <code>toggle_fullscreen</code> twice
+with the currently focused should be the same. This cannot hold for a
+window manager that implements
+<a href="trait.TilingSupport.html"><code>TilingSupport</code></a>. Try to figure out why.</p>
+</div></div>
+        <h2 id='implementors'>Implementors</h2>
+        <ul class='item-list' id='implementors-list'>
+    </ul><script type="text/javascript" async
+                         src="../../implementors/cplwm_api/wm/trait.FullscreenSupport.js">
+                 </script></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "cplwm_api";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
+    
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `FloatSupport` trait in crate `cplwm_api`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, FloatSupport">
+
+    <title>cplwm_api::wm::FloatSupport - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='../index.html'>cplwm_api</a>::<wbr><a href='index.html'>wm</a></p><script>window.sidebarCurrent = {name: 'FloatSupport', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content trait">
+<h1 class='fqn'><span class='in-band'>Trait <a href='../index.html'>cplwm_api</a>::<wbr><a href='index.html'>wm</a>::<wbr><a class='trait' href=''>FloatSupport</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-538' class='srclink' href='../../src/cplwm_api/wm.rs.html#464-522' title='goto source code'>[src]</a></span></h1>
+<pre class='rust trait'>pub trait FloatSupport: <a class='trait' href='../../cplwm_api/wm/trait.WindowManager.html' title='cplwm_api::wm::WindowManager'>WindowManager</a> {
+    fn <a href='#tymethod.get_floating_windows' class='fnname'>get_floating_windows</a>(&amp;self) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='type' href='../../cplwm_api/types/type.Window.html' title='cplwm_api::types::Window'>Window</a>&gt;;
+    fn <a href='#tymethod.toggle_floating' class='fnname'>toggle_floating</a>(&amp;mut self, window: <a class='type' href='../../cplwm_api/types/type.Window.html' title='cplwm_api::types::Window'>Window</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>,&nbsp;Self::Error&gt;;
+    fn <a href='#tymethod.set_window_geometry' class='fnname'>set_window_geometry</a>(&amp;mut self, window: <a class='type' href='../../cplwm_api/types/type.Window.html' title='cplwm_api::types::Window'>Window</a>, new_geometry: <a class='struct' href='../../cplwm_api/types/struct.Geometry.html' title='cplwm_api::types::Geometry'>Geometry</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>,&nbsp;Self::Error&gt;;
+
+    fn <a href='#method.is_floating' class='fnname'>is_floating</a>(&amp;self, window: <a class='type' href='../../cplwm_api/types/type.Window.html' title='cplwm_api::types::Window'>Window</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a> { ... }
+}</pre><div class='docblock'><p>A window manager that supports floating windows.</p>
+
+<p>Some windows are not suitable for <em>tiling</em>, e.g. dialogs, popups, video,
+etc. Instead of tiling them, they should <em>float</em> above the tiled windows.
+Floating windows can be moved around and resized with the mouse.</p>
+
+<p>The backend will detect that some windows should float from the start and
+will set the <code>float_or_tile</code> field of <code>WindowWithInfo</code> to <code>Float</code> in these
+cases. A window manager implementing this trait should implement the
+<code>add_window</code> method of <code>WindowManager</code> such that these windows will float
+after adding them.</p>
+
+<p>The user can choose to <em>float</em> any tiled window or to <em>sink</em> (make it
+tiled again) any floating window.</p>
+
+<p><strong>Invariant</strong>: every floating window <code>w</code> (<code>is_floating(w) == true</code>) must
+be placed above the tiled windows in the window layout returned by
+<code>get_window_layout()</code>.</p>
+</div>
+            <h2 id='required-methods'>Required Methods</h2>
+            <div class='methods'>
+        <h3 id='tymethod.get_floating_windows' class='method stab '><code>fn <a href='#tymethod.get_floating_windows' class='fnname'>get_floating_windows</a>(&amp;self) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='type' href='../../cplwm_api/types/type.Window.html' title='cplwm_api::types::Window'>Window</a>&gt;</code></h3><div class='docblock'><p>Return a vector of all the visible floating windows.</p>
+
+<p>The order of the windows in the vector does not matter.</p>
+</div><h3 id='tymethod.toggle_floating' class='method stab '><code>fn <a href='#tymethod.toggle_floating' class='fnname'>toggle_floating</a>(&amp;mut self, window: <a class='type' href='../../cplwm_api/types/type.Window.html' title='cplwm_api::types::Window'>Window</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>,&nbsp;Self::Error&gt;</code></h3><div class='docblock'><p>If the given window is floating, let it <em>sink</em>, if it is not floating,
+let it <em>float</em>.</p>
+
+<p>When a non-floating window starts to float, its original geometry
+(passed to <code>add_window</code>) should be restored.</p>
+
+<p><strong>Invariant</strong>: if calling <code>toggle_floating(w)</code> with a tiled window <code>w</code>
+succeeds, <code>is_floating(w)</code> must return <code>true</code>.</p>
+
+<p><strong>Invariant</strong>: if calling <code>toggle_floating(w)</code> with a floating window
+<code>w</code> succeeds, <code>is_floating(w)</code> must return <code>false</code>.</p>
+
+<p><strong>Invariant</strong>: the result of <code>is_floating(w)</code> must be the same before
+and after calling <code>toggle_floating(w)</code> twice.</p>
+
+<p>This function is <em>allowed</em> to return an appropriate error when the
+window is not managed by the window manager.</p>
+</div><h3 id='tymethod.set_window_geometry' class='method stab '><code>fn <a href='#tymethod.set_window_geometry' class='fnname'>set_window_geometry</a>(&amp;mut self, window: <a class='type' href='../../cplwm_api/types/type.Window.html' title='cplwm_api::types::Window'>Window</a>, new_geometry: <a class='struct' href='../../cplwm_api/types/struct.Geometry.html' title='cplwm_api::types::Geometry'>Geometry</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>,&nbsp;Self::Error&gt;</code></h3><div class='docblock'><p>Resize/move the given floating window according to the given geometry.</p>
+
+<p>This function is called when the user moves or resizes a window using
+the mouse, but can also be called by custom user commands.</p>
+
+<p>The window layout should reflect the geometry change of the floating
+window.</p>
+
+<p>This function is <em>allowed</em> to return an appropriate error when the
+window is not managed by the window manager <em>or</em> when the window is
+not floating.</p>
+</div></div>
+            <h2 id='provided-methods'>Provided Methods</h2>
+            <div class='methods'>
+        <h3 id='method.is_floating' class='method stab '><code>fn <a href='#method.is_floating' class='fnname'>is_floating</a>(&amp;self, window: <a class='type' href='../../cplwm_api/types/type.Window.html' title='cplwm_api::types::Window'>Window</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h3><div class='docblock'><p>Return true if the given window is floating.</p>
+
+<p>This function must always return false when the given window is not
+managed by the window manager.</p>
+
+<p><strong>Invariant</strong>: if <code>is_floating(w) == true</code> for some window <code>w</code>, then
+<code>is_managed(w) == true</code>.</p>
+
+<p><strong>Invariant</strong>: <code>is_floating(w) == true</code> for some window <code>w</code>, iff the
+vector returned by the <code>get_floating_windows</code> method contains <code>w</code>.</p>
+
+<p>A default implementation is provided in terms of
+<code>get_floating_windows()</code>. Override this implementation if you have a
+more efficient one.</p>
+</div></div>
+        <h2 id='implementors'>Implementors</h2>
+        <ul class='item-list' id='implementors-list'>
+    </ul><script type="text/javascript" async
+                         src="../../implementors/cplwm_api/wm/trait.FloatSupport.js">
+                 </script></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "cplwm_api";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
+    
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

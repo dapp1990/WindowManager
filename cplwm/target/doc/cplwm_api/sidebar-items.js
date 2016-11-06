@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["types","Basic types used throughout the whole project."],["wm","Window manager functionality defined as traits"]]});

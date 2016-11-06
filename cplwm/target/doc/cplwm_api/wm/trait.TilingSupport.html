@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `TilingSupport` trait in crate `cplwm_api`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, TilingSupport">
+
+    <title>cplwm_api::wm::TilingSupport - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='../index.html'>cplwm_api</a>::<wbr><a href='index.html'>wm</a></p><script>window.sidebarCurrent = {name: 'TilingSupport', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content trait">
+<h1 class='fqn'><span class='in-band'>Trait <a href='../index.html'>cplwm_api</a>::<wbr><a href='index.html'>wm</a>::<wbr><a class='trait' href=''>TilingSupport</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-529' class='srclink' href='../../src/cplwm_api/wm.rs.html#400-444' title='goto source code'>[src]</a></span></h1>
+<pre class='rust trait'>pub trait TilingSupport: <a class='trait' href='../../cplwm_api/wm/trait.WindowManager.html' title='cplwm_api::wm::WindowManager'>WindowManager</a> {
+    fn <a href='#tymethod.get_master_window' class='fnname'>get_master_window</a>(&amp;self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='type' href='../../cplwm_api/types/type.Window.html' title='cplwm_api::types::Window'>Window</a>&gt;;
+    fn <a href='#tymethod.swap_with_master' class='fnname'>swap_with_master</a>(&amp;mut self, window: <a class='type' href='../../cplwm_api/types/type.Window.html' title='cplwm_api::types::Window'>Window</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>,&nbsp;Self::Error&gt;;
+    fn <a href='#tymethod.swap_windows' class='fnname'>swap_windows</a>(&amp;mut self, dir: <a class='enum' href='../../cplwm_api/types/enum.PrevOrNext.html' title='cplwm_api::types::PrevOrNext'>PrevOrNext</a>);
+}</pre><div class='docblock'><p>A window manager that supports <em>tiling</em>.</p>
+
+<p>The idea of <em>tiling</em> is explained in the assignment. While most tiling
+window managers have many possible layouts to (dynamically) choose from,
+we limit ourselves to one simple layout here. In an optional assignment
+you will be asked to implement a different layout algorithm.</p>
+
+<h1 id='layout-algorithm' class='section-header'><a href='#layout-algorithm'>Layout algorithm</a></h1>
+<p>This window manager follows the following the tiling layout: we start out
+with no windows. When the first window is added, the window is maximised
+as in the ASCII diagram below.</p>
+
+<pre class='rust rust-example-rendered'>
+<span class='op'>+</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>+</span>
+<span class='op'>|</span>                     <span class='op'>|</span>
+<span class='op'>|</span>                     <span class='op'>|</span>
+<span class='op'>|</span>          <span class='number'>1</span>          <span class='op'>|</span>
+<span class='op'>|</span>                     <span class='op'>|</span>
+<span class='op'>|</span>                     <span class='op'>|</span>
+<span class='op'>+</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>+</span></pre>
+
+<p>When a second window is added, the screen is split in two tiles: a left
+tile for window 1 and a right tile for window 2.</p>
+
+<pre class='rust rust-example-rendered'>
+<span class='op'>+</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>+</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>+</span>
+<span class='op'>|</span>          <span class='op'>|</span>          <span class='op'>|</span>
+<span class='op'>|</span>          <span class='op'>|</span>          <span class='op'>|</span>
+<span class='op'>|</span>    <span class='number'>1</span>     <span class='op'>|</span>    <span class='number'>2</span>     <span class='op'>|</span>
+<span class='op'>|</span>          <span class='op'>|</span>          <span class='op'>|</span>
+<span class='op'>|</span>          <span class='op'>|</span>          <span class='op'>|</span>
+<span class='op'>+</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>+</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>+</span></pre>
+
+<p>When a third window is added, the right tile will split in two tiles: a
+top tile for window 2 and a bottom tile for window 3.</p>
+
+<pre class='rust rust-example-rendered'>
+<span class='op'>+</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>+</span>
+<span class='op'>|</span>          <span class='op'>|</span>          <span class='op'>|</span>
+<span class='op'>|</span>          <span class='op'>|</span>    <span class='number'>2</span>     <span class='op'>|</span>
+<span class='op'>|</span>    <span class='number'>1</span>     <span class='op'>+</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>+</span>
+<span class='op'>|</span>          <span class='op'>|</span>          <span class='op'>|</span>
+<span class='op'>|</span>          <span class='op'>|</span>    <span class='number'>3</span>     <span class='op'>|</span>
+<span class='op'>+</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>+</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>+</span></pre>
+
+<p>The left tile will never be split, we call this the <em>master tile</em>. The
+user typically places his/her main application in this tile, e.g., the
+browser or editor. Additional windows, e.g. a terminal, a file manager, or
+a chat window are displayed in the side tiles. Note that even when the
+master tile is focused, new windows will not appear in the master tile,
+but in a new side tile.</p>
+
+<p>When a fourth window is added, an additional tile is created on the right
+side and the new window is placed in the bottom tile.</p>
+
+<pre class='rust rust-example-rendered'>
+<span class='op'>+</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>+</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>+</span>
+<span class='op'>|</span>          <span class='op'>|</span>    <span class='number'>2</span>     <span class='op'>|</span>
+<span class='op'>|</span>          <span class='op'>+</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>+</span>
+<span class='op'>|</span>    <span class='number'>1</span>     <span class='op'>|</span>    <span class='number'>3</span>     <span class='op'>|</span>
+<span class='op'>|</span>          <span class='op'>+</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>+</span>
+<span class='op'>|</span>          <span class='op'>|</span>    <span class='number'>4</span>     <span class='op'>|</span>
+<span class='op'>+</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>+</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>-</span><span class='op'>+</span></pre>
+
+<p>When window 2, 3, or 4 is closed, the corresponding tile disappears and we
+go back to the previous layout. When window 1 is closed, the first side
+window (2) is chosen to be displayed in the master tile. The promoted
+window&#39;s previous tile disappears.</p>
+
+<p><strong>Invariant</strong>: at all times there must be as many tiles as there are
+visible windows. Note that this will not hold when there are floating
+(<a href="trait.FloatSupport.html"><code>FloatSupport</code></a>) or minimised windows
+(<a href="trait.MinimiseSupport.html"><code>MinimiseSupport</code></a>).</p>
+
+<h1 id='how-to-implement-it' class='section-header'><a href='#how-to-implement-it'>How to implement it</a></h1>
+<p>This trait contains some useful methods to move around windows. It is not
+sufficient to implement these methods, the actual tiling logic happens
+when windows are added or removed, and in <code>get_window_layout</code>.
+Consequently, you must change the appropriate implementations of the
+methods of the <code>WindowManager</code> trait to take care of tiling.</p>
+</div>
+            <h2 id='required-methods'>Required Methods</h2>
+            <div class='methods'>
+        <h3 id='tymethod.get_master_window' class='method stab '><code>fn <a href='#tymethod.get_master_window' class='fnname'>get_master_window</a>(&amp;self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='type' href='../../cplwm_api/types/type.Window.html' title='cplwm_api::types::Window'>Window</a>&gt;</code></h3><div class='docblock'><p>Return the window displayed in the master tile.</p>
+
+<p>If there are no windows, return <code>None</code>.</p>
+
+<p><strong>Invariant</strong>: <code>get_master_window() == Some(w)</code>, then <code>w</code> must occur
+in the vector returned by <code>get_windows()</code>.</p>
+
+<p><strong>Invariant</strong>: if the vector returned by <code>get_windows()</code> is empty =&gt;
+<code>get_master_window() == None</code>. The other direction of the arrow must
+not hold, e.g., there could floating windows (see <code>FloatSupport</code>), but
+no tiled windows.</p>
+</div><h3 id='tymethod.swap_with_master' class='method stab '><code>fn <a href='#tymethod.swap_with_master' class='fnname'>swap_with_master</a>(&amp;mut self, window: <a class='type' href='../../cplwm_api/types/type.Window.html' title='cplwm_api::types::Window'>Window</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>,&nbsp;Self::Error&gt;</code></h3><div class='docblock'><p>Swap the given window with the window in the master tile.</p>
+
+<p>After the function has succeeded, the master window should be focused.</p>
+
+<p>If the given window is already in the master tile, no windows have to
+be swapped, but the master window should be focused.</p>
+
+<p><strong>Invariant</strong>: if <code>swap_with_master(w)</code> succeeds, <code>get_master_window() == Some(w)</code>.</p>
+
+<p>This function is <em>allowed</em> to return an appropriate error when the
+window is not managed by the window manager.</p>
+</div><h3 id='tymethod.swap_windows' class='method stab '><code>fn <a href='#tymethod.swap_windows' class='fnname'>swap_windows</a>(&amp;mut self, dir: <a class='enum' href='../../cplwm_api/types/enum.PrevOrNext.html' title='cplwm_api::types::PrevOrNext'>PrevOrNext</a>)</code></h3><div class='docblock'><p>Swap the focused window with the one in the next or previous tile.</p>
+
+<p>Do nothing when there are no windows, when there is only one window,
+or when no window is focused.</p>
+
+<p>If there were two tiles and the swap happened, the same window will be
+focused, but the other tile will be focused.</p>
+
+<p><strong>Invariant</strong>: calling <code>swap_windows(dir)</code> for any <code>dir</code> will not
+change the focused window, even if no window was focused.</p>
+
+<p><strong>Invariant</strong>: calling <code>swap_windows(dir)</code> and then
+<code>swap_windows(dir.opposite())</code> will not change the window layout.</p>
+</div></div>
+        <h2 id='implementors'>Implementors</h2>
+        <ul class='item-list' id='implementors-list'>
+    </ul><script type="text/javascript" async
+                         src="../../implementors/cplwm_api/wm/trait.TilingSupport.js">
+                 </script></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "cplwm_api";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
+    
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>
