@@ -177,14 +177,14 @@ impl WindowManager for FullscreenWM {
     //  will not able to use again ultil the client returns it.
     fn get_windows(&self) -> Vec<Window> {
         // self.windows.clone()
-        // I cretae new vec, which temporaly save the window elements
+        // I cretae new vec, which temporaly saves the window elements
         let mut temp_windows = Vec::new();
-        // I iterate over WindowManager to get the WindowWithInfo to obtain the 
-        // window which will be stored in tempWindows.
+        // I iterate over WindowManager to get *window_with_info*s to obtain the 
+        // window which will be stored in temp_windows.
         for window_with_info in self.windows.iter() {
    			temp_windows.push(window_with_info.window.clone());
 		}
-		//return tempWindows with window elements
+		//return temp_windows with window elements
        	temp_windows
     }
 
@@ -195,13 +195,14 @@ impl WindowManager for FullscreenWM {
         //	self.windows.last().map(|w| *w)
         // I get the obtain the WindowWithInfo 
         if !self.windows.is_empty(){ 
-	        let last_index = self.windows.len() - 1;      
-	        match self.windows.get(last_index) {
-	        	// If there is no WindowWithInfo structure, I return None
-	            None => None,
-	            // If there is WindowWithInfo structure, I get window and return Some(window)
-	            Some(i) => Some(i.window),
-	        }
+        	// I use unwrap() because the if test ensure that *windows* has
+        	// *window*s
+        	if self.windows.len() > 1{ 
+		        let last_index = self.windows.len() - 1;      
+		        Some(self.windows.get(last_index).unwrap().window)
+		    }else{
+		    	Some(self.windows.get(0).unwrap().window)
+		    }
     	}else{
     		None
     	}
@@ -304,7 +305,7 @@ impl WindowManager for FullscreenWM {
 	// Then *window_with_info* will be pushed once again at the top of 
 	// *windows*.
     fn focus_window(&mut self, window: Option<Window>) -> Result<(), Self::Error> {
-    	// First we check if the given *window* is actually a window or a None
+    	// First I check if the given *window* is either a window or a None
     	match window{
     		// If None, nothing happens
     		None => Ok(()),
@@ -333,38 +334,53 @@ impl WindowManager for FullscreenWM {
    		}
     }
 
-    /// Try this yourself
+    /*** Approach ***/
+    // I take advantage of the new structure, so I use pop_back() and push_front()
+    // for prev action and  pop_front() and push_back() for next action
+    // Condition when *windows* is empty or a singleton is covered with a naive 
+    // if statement. Focus *window* by definition is always the last element, no
+    // need to test whether there is a focus *window* when *windows* is a 
+    // singleton, the only *window* is always focus.
     fn cycle_focus(&mut self, dir: PrevOrNext) {
-        // You will probably notice here that a `Vec` is not the ideal data
-        // structure to implement this function. Feel free to replace the
-        // `Vec` with another data structure.
-        
-        //unimplemented!()
+        if self.windows.len() > 1{
+        	match dir {
+        		// I use unwrap() because we already test that *windows*
+	            // is not empty, temp will be always receive a *window_with_info*
+	            // element
+	            PrevOrNext::Prev => {
+	            	let temp = self.windows.pop_back().unwrap();
+	            	self.windows.push_front(temp);
+	            }
 
-        // swap(&mut self, i: usize, j: usize)
-        // fn len(&self) -> usize
-        // is_empty(&self) -> bool
-
-        match dir {
-            PrevOrNext::Prev => (),
-            PrevOrNext::Next => (),
-            //FullscreenWMError::ManagedWindow(ref window) => write!(f, "Window {} is already managed", window), NOT
-        }
+	            PrevOrNext::Next => {
+	            	let temp = self.windows.pop_front().unwrap();
+	            	self.windows.push_back(temp);
+	            }
+	         }
+        };
     }
 
-    /// Try this yourself
+    /*** Approach ***/
+    // Since now *windows* stores the whole *window_with_info*, I only iterate
+    // over, found the corresponding *window* and return the *window_with_info*,
+    // otherwise an *UnknownWindow* error is thrown.
     fn get_window_info(&self, window: Window) -> Result<WindowWithInfo, Self::Error> {
-        unimplemented!()
+    	match self.windows.iter().position(|w| (*w).window == window) {
+    		None => Err(FullscreenWMError::UnknownWindow(window)),
+    		Some(i) => Ok(self.windows.get(i).unwrap().clone()),
+    	}
     }
 
-    /// Try this yourself
+    /*** Approach ***/
+    // I just take the screen attribute of FullscreenWM
     fn get_screen(&self) -> Screen {
-        unimplemented!()
+        self.screen
     }
 
-    /// Try this yourself
+    /*** Approach ***/
+    // I just take update screen attribute of FullscreenWM
     fn resize_screen(&mut self, screen: Screen) {
-        unimplemented!()
+        self.screen = screen
     }
 }
 
