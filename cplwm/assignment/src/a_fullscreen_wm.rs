@@ -210,7 +210,7 @@ impl WindowManager for FullscreenWM {
             self.windows.push(window_with_info);
         }
         //else{
-        	//Err(FullscreenWMError::ManagedWindow(window_with_info.window));
+        	//Err(FullscreenWMError::ManagedWindow(window_with_info.window)); *******
         //}
         Ok(())
     }
@@ -280,8 +280,40 @@ impl WindowManager for FullscreenWM {
     ///
     /// You will probably have to change the code above (method
     /// implementations as well as the `FullscreenWM` struct) to achieve this.
+
+    /*** Approach ***/
+    // Once can look over *windows* for given *window*, extract 
+	// *window_with_info* and remove it.
+	// Then *window_with_info* will be pushed once again at the top of 
+	// *windows*.
     fn focus_window(&mut self, window: Option<Window>) -> Result<(), Self::Error> {
-        unimplemented!()
+    	// First we check if the given *window* is actually a window or a None
+    	match window{
+    		// If None, nothing happens
+    		None => Ok(()),
+    		// If Some, focus operation starts
+    		Some(gw) => {
+
+		    	// By default *remove_window* only removes *window_with_info* 
+		    	// without returns it, so a sliglty modification of that method 
+		    	// is done.
+		    	// Now the *window_with_info* element is temporaly stored
+		    	match self.windows.iter().position(|w| (*w).window == gw) {
+		            None => Err(FullscreenWMError::UnknownWindow(gw)),
+		            Some(i) => {
+		            	// we get a copy of the actually *window_with_info* that is
+		            	// in *windows*, we used unwrap() here because we are already
+		            	// tested that the actual structure exists
+		            	let window_with_info = self.windows.get(i).unwrap().clone();
+		            	// the given window is removed
+		                self.windows.remove(i);
+		                // Fortunatly, *add_window* can helps us out to add the 
+						// *window_with_info*
+		                self.add_window(window_with_info)
+		            }
+		        }
+	    	}
+   		}
     }
 
     /// Try this yourself
