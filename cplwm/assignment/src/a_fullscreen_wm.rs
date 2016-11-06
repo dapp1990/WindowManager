@@ -23,7 +23,7 @@
 //! COMPLETED: PARTIAL
 //!
 //! COMMENTS:
-//! - ManagedWindow error added. NOT
+//! - Vec changed to VecDeque
 //! - FullscreenWM structure was extended to not only contains Window but 
 //! WindowWithInfo
 //!
@@ -38,6 +38,13 @@
 // std::error::Error, etc.
 use std::error;
 use std::fmt;
+use std::collections::VecDeque;
+// Motivation: 
+// "You want a Vec that supports efficient insertion at both ends of the sequence.
+// You want a queue.
+// You want a double-ended queue (deque)."
+// From: https://doc.rust-lang.org/std/collections/#use-a-vecdeque-when
+
 
 // Import some types and the WindowManager trait from the cplwm_api crate
 // (defined in the api folder).
@@ -99,7 +106,7 @@ pub struct FullscreenWM {
     /// A vector of windows, the first one is on the bottom, the last one is
     /// on top, and also the only visible window.
     //	pub windows: Vec<Window>,
-    pub windows: Vec<WindowWithInfo>,
+    pub windows: VecDeque<WindowWithInfo>,
     /// We need to know which size the fullscreen window must be.
     pub screen: Screen,
 }
@@ -158,7 +165,7 @@ impl WindowManager for FullscreenWM {
     /// Track the given screen and make a new empty `Vec`.
     fn new(screen: Screen) -> FullscreenWM {
         FullscreenWM {
-            windows: Vec::new(),
+            windows: VecDeque::new(),
             screen: screen,
         }
     }
@@ -186,13 +193,18 @@ impl WindowManager for FullscreenWM {
     /// Note that the `last` method of `Vec` returns an `Option`.
     fn get_focused_window(&self) -> Option<Window> {
         //	self.windows.last().map(|w| *w)
-        // I get the obtain the WindowWithInfo        
-        match self.windows.last().map(|w| *w) {
-        	// If there is no WindowWithInfo structure, I return None
-            None => None,
-            // If there is WindowWithInfo structure, I get window and return Some(window)
-            Some(i) => Some(i.window),
-        }
+        // I get the obtain the WindowWithInfo 
+        if !self.windows.is_empty(){ 
+	        let last_index = self.windows.len() - 1;      
+	        match self.windows.get(last_index) {
+	        	// If there is no WindowWithInfo structure, I return None
+	            None => None,
+	            // If there is WindowWithInfo structure, I get window and return Some(window)
+	            Some(i) => Some(i.window),
+	        }
+    	}else{
+    		None
+    	}
 
     }
 
@@ -207,7 +219,7 @@ impl WindowManager for FullscreenWM {
     fn add_window(&mut self, window_with_info: WindowWithInfo) -> Result<(), Self::Error> {
         if !self.is_managed(window_with_info.window) {
             //	self.windows.push(window_with_info.window);
-            self.windows.push(window_with_info);
+            self.windows.push_back(window_with_info);
         }
         //else{
         	//Err(FullscreenWMError::ManagedWindow(window_with_info.window)); *******
@@ -253,20 +265,25 @@ impl WindowManager for FullscreenWM {
         let fullscreen_geometry = self.screen.to_geometry();
         //	match self.windows.last() {
         //	Updated to substract window from WindowWithInfo
-        match self.windows.last() {
-            // If there is at least one window.
-            Some(w) => {
-                WindowLayout {
-                    // The last window is focused ...
-                    focused_window: Some((*w).window),
-                    // ... and should fill the screen. The other windows are
-                    // simply hidden.
-                    windows: vec![((*w).window, fullscreen_geometry)],
-                }
-            }
-            // Otherwise, return an empty WindowLayout
-            None => WindowLayout::new(),
-        }
+        if !self.windows.is_empty(){
+	        let last_index = self.windows.len() - 1;
+	        match self.windows.get(last_index) {
+	            // If there is at least one window.
+	            Some(w) => {
+	                WindowLayout {
+	                    // The last window is focused ...
+	                    focused_window: Some((*w).window),
+	                    // ... and should fill the screen. The other windows are
+	                    // simply hidden.
+	                    windows: vec![((*w).window, fullscreen_geometry)],
+	                }
+	            }
+	            // Otherwise, return an empty WindowLayout
+	            None => WindowLayout::new(),
+	        }
+        }else {
+            WindowLayout::new()
+        } 
     }
 
     // Before you continue any further, first have a look at the bottom of
@@ -321,7 +338,18 @@ impl WindowManager for FullscreenWM {
         // You will probably notice here that a `Vec` is not the ideal data
         // structure to implement this function. Feel free to replace the
         // `Vec` with another data structure.
-        unimplemented!()
+        
+        //unimplemented!()
+
+        // swap(&mut self, i: usize, j: usize)
+        // fn len(&self) -> usize
+        // is_empty(&self) -> bool
+
+        match dir {
+            PrevOrNext::Prev => (),
+            PrevOrNext::Next => (),
+            //FullscreenWMError::ManagedWindow(ref window) => write!(f, "Window {} is already managed", window), NOT
+        }
     }
 
     /// Try this yourself
