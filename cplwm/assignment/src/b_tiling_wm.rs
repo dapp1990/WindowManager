@@ -17,7 +17,7 @@
 //! or you want to explain your approach, write it down after the comments
 //! section.
 //!
-//! COMPLETED: PARTIAL
+//! COMPLETED: YES
 //!
 //! COMMENTS:
 //!
@@ -39,7 +39,6 @@
 // Add imports here
 use std::error;
 use std::fmt;
-//use std::collections::VecDeque;
 
 use cplwm_api::types::{PrevOrNext, Screen, Window, WindowLayout, WindowWithInfo, Geometry};
 use cplwm_api::wm::WindowManager;
@@ -59,7 +58,7 @@ pub type WMName = TillingWM;
 /// 
 #[derive(RustcDecodable, RustcEncodable, Debug, Clone)]
 pub struct TillingWM {
-	/// **TODO**: Documentation
+	/// **TODO**: No need to used a complex collection
     pub windows: Vec<WindowWithInfo>,  
     /// **TODO**: Documentation
     pub screen: Screen,
@@ -234,9 +233,6 @@ impl WindowManager for TillingWM {
 
         	}else{
 
-        		// here we ensure that we have at least one element the master window, after doing some test I've realised that
-        		// there is no possible way when master window is the unique window in windows and it is not focused, at leat in
-        		// windows manager however it is handle for, possible, futher implementations
         		let fullscreen_geometry = self.screen.to_geometry();
 
         		let temp_focused_window = 
@@ -399,6 +395,7 @@ impl TilingSupport for TillingWM {
 
 }
 
+/*
 #[cfg(test)]
 mod tests {
 
@@ -781,4 +778,4 @@ mod tests {
        	assert_eq!(Some(4), wl5.focused_window);
        	assert_eq!(vec![(2, master_half),(4, first_half),(1, second_half),(3, third_half)], wl5.windows);
     }
-}
+}*/
