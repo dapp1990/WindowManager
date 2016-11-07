@@ -433,7 +433,7 @@ pub trait TilingSupport: WindowManager {
     /// or when no window is focused.
     ///
     /// If there were two tiles and the swap happened, the same window will be
-    /// focused, but the other tile will be focused.
+    /// focused, but the other tile will be focused. ->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>?
     ///
     /// **Invariant**: calling `swap_windows(dir)` for any `dir` will not
     /// change the focused window, even if no window was focused.

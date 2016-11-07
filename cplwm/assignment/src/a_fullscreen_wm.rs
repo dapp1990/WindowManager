@@ -20,10 +20,14 @@
 //! or you want to explain your approach, write it down after the comments
 //! section.
 //!
-//! COMPLETED: PARTIAL
+//! COMPLETED: YES
 //!
 //! COMMENTS:
-//! - Vec changed to VecDeque
+//!
+//! ## something
+//! 
+//! Vec changed to VecDeque
+//!
 //! - FullscreenWM structure was extended to not only contains Window but 
 //! WindowWithInfo
 //!
@@ -32,7 +36,7 @@
 // which generates warnings. The annotation below disables this warning.
 // Remove this annotation when you have implemented all methods, so you get
 // warned about variables that you did not use by mistake.
-#![allow(unused_variables)]
+// #![allow(unused_variables)]
 
 // We import std::error and std::format so we can say error::Error instead of
 // std::error::Error, etc.
@@ -129,8 +133,6 @@ pub struct FullscreenWM {
 pub enum FullscreenWMError {
     /// This window is not known by the window manager.
     UnknownWindow(Window),
-    //	This window is already in the window manager. NOT
-    //	ManagedWindow(Window), NOT
 }
 
 // This code is explained in the documentation of the associated [Error] type
@@ -139,7 +141,6 @@ impl fmt::Display for FullscreenWMError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             FullscreenWMError::UnknownWindow(ref window) => write!(f, "Unknown window: {}", window),
-            //FullscreenWMError::ManagedWindow(ref window) => write!(f, "Window {} is already managed", window), NOT
         }
     }
 }
@@ -150,7 +151,6 @@ impl error::Error for FullscreenWMError {
     fn description(&self) -> &'static str {
         match *self {
             FullscreenWMError::UnknownWindow(_) => "Unknown window",
-            //FullscreenWMError::ManagedWindow(_) => "Window is already managed", NOT
         }
     }
 }
@@ -222,9 +222,6 @@ impl WindowManager for FullscreenWM {
             //	self.windows.push(window_with_info.window);
             self.windows.push_back(window_with_info);
         }
-        //else{
-        	//Err(FullscreenWMError::ManagedWindow(window_with_info.window)); *******
-        //}
         Ok(())
     }
 
@@ -389,6 +386,7 @@ impl WindowManager for FullscreenWM {
 //
 // The `#[cfg(test)]` annotation means that this code is only compiled when
 // we're testing the code.
+/*
 #[cfg(test)]
 mod tests {
 
@@ -631,4 +629,4 @@ mod tests {
         assert_eq!(wm.get_screen(), SCREEN2);
      }
 
-}
+}*/
