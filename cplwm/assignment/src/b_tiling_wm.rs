@@ -42,7 +42,7 @@ use std::error;
 use std::fmt;
 //use std::collections::VecDeque;
 
-use cplwm_api::types::{PrevOrNext, Screen, Window, WindowLayout, WindowWithInfo};
+use cplwm_api::types::{PrevOrNext, Screen, Window, WindowLayout, WindowWithInfo, Geometry};
 use cplwm_api::wm::WindowManager;
 use cplwm_api::wm::TilingSupport;
 
@@ -178,21 +178,71 @@ impl WindowManager for TillingWM {
     /// * When the `Option` is `None`, we know that there are no windows, so
     ///   we can just return an empty `WindowLayout`.
     
-    /// I huess you can imporove this
 
     fn get_window_layout(&self) -> WindowLayout {
-        let fullscreen_geometry = self.screen.to_geometry();
+
         if !self.windows.is_empty(){
-	        //let last_index = self.windows.len() - 1;
-	        match self.windows.get(self.index_foused_window) {
-	            Some(w) => {
-	                WindowLayout {
-	                    focused_window: Some((*w).window),
-	                    windows: vec![((*w).window, fullscreen_geometry)],
-	                }
-	            }
-	            None => WindowLayout::new(),
-	        }
+
+        	if self.windows.len() > 1 {
+
+        		let divisor = (self.windows.len() - 1) as u32;
+        		let last_index = self.windows.len() - 1;
+        		let height_side = self.screen.height / divisor;
+        		let width_side = self.screen.width / 2;
+        		let x_point = (self.screen.width / 2) as i32;
+				let master_window = self.get_master_window().unwrap();
+
+        		let mut temp_windows = Vec::new();
+        		let mut y_point = 0 as i32;
+
+		       	for window_with_info in self.windows.iter(){
+		       		if master_window != window_with_info.window {
+		       			// I calculate the values of the secondary windows (right windows)
+			        	let rigth_geometry = Geometry {
+		            		x: x_point,
+		            		y: y_point,
+		            		width: width_side,
+		            		height: height_side,
+	        			};
+
+			   			temp_windows.push((window_with_info.window.clone(), rigth_geometry));
+
+	        			y_point += (height_side) as i32;
+
+        			}else{
+        				// I calculate the values for master window
+						let  master_geometry = Geometry { 
+							x: 0,
+			            	y: 0,
+			            	width: width_side,
+			            	height: self.screen.height,
+		        		};
+
+        				temp_windows.push((window_with_info.window.clone(), master_geometry));
+        			}
+				}
+
+		       	 WindowLayout {
+		       	 	focused_window: Some(self.windows.get(self.index_foused_window).unwrap().window),
+		       	 	windows: temp_windows,
+		       	 }
+
+        	}else{
+
+        		// here we ensure that we have at least one lement so no match is necessary
+        		let fullscreen_geometry = self.screen.to_geometry();
+
+        		match self.windows.get(self.index_foused_window) {
+
+		            Some(w) => {
+		                WindowLayout {
+		                    focused_window: Some((*w).window),
+		                    windows: vec![((*w).window, fullscreen_geometry)],
+		                }
+		            }
+		            None => WindowLayout::new(),
+		        }
+        	}	        
         }else {
             WindowLayout::new()
         } 
@@ -265,17 +315,29 @@ impl WindowManager for TillingWM {
 impl TilingSupport for TillingWM {
 
 	fn get_master_window(&self) -> Option<Window>{
-		unimplemented!()
+		if !self.windows.is_empty(){
+			//Using unwrap because there should be at leat on element since the collection is not empty
+			Some(self.windows.get(0).unwrap().window)
+		}else{
+			None
+		}
 	}
 
 	fn swap_with_master(&mut self, window: Window) -> Result<(), Self::Error>{
-		unimplemented!()
+		match self.windows.iter().position(|w| (*w).window == window) {
+            None => Err(TillingWMError::UnknownWindow(window)),
+            Some(i) => {
+            	self.windows.swap(0, i);
+            	let temp_master = self.get_master_window();
+            	self.focus_window(temp_master)
+            }
+        }
 	}
 
 
 	// use swap method of the structure
 	fn swap_windows(&mut self, dir: PrevOrNext){
-		unimplemented!()
+		unimplemented!();
 	}
 
 }
@@ -363,8 +425,22 @@ mod tests {
         let wl2 = wm.get_window_layout();
         // window 2 should be focused
         assert_eq!(Some(2), wl2.focused_window);
-        // and fullscreen.
-        assert_eq!(vec![(2, SCREEN_GEOM)], wl2.windows);
+        // and should be half of the screen.
+        let first_half = Geometry {
+	        x: 0,
+	        y: 0,
+	        width: 400,
+	        height: 600,
+	    };
+
+        let second_half = Geometry {
+	        x: 400,
+	        y: 0,
+	        width: 400,
+	        height: 600,
+	    };
+
+        assert_eq!(vec![(1, first_half),(2, second_half)], wl2.windows);
 
         // Now let's remove window 2
         wm.remove_window(2).unwrap();
