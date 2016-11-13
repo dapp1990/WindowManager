@@ -24,7 +24,7 @@
 //! or you want to explain your approach, write it down after the comments
 //! section.
 //!
-//! COMPLETED: PARTIAL
+//! COMPLETED: Yes
 //!
 //! COMMENTS:
 //!	The approach now is quite similar to b_tillin_vm, but now get_window_layout is changed. First processing floating windows 
@@ -95,41 +95,6 @@ impl FloatingWM {
 				Some(prev_index)
 			}else{
 				self.get_prev_tile_index(prev_index,saved)
-			}
-		}
-	}
-
-	/// Get the next index by the given index of the float windows.
-	// when the end of the list is reached, tthen start to loop
-	pub fn get_next_float_index(& self, index:usize, saved:usize) -> Option<usize> {
-		let mut next_index = 0;
-		if self.windows.len()-1 > index{
-			next_index = index + 1;			
-		}
-		if next_index == saved {
-			None
-		}else{
-			if self.windows.get(next_index).unwrap().float_or_tile == FloatOrTile::Float{
-				Some(next_index)
-			}else{
-				self.get_next_float_index(next_index,saved)
-			}
-		}
-	}
-
-	/// Get the previous index by the given index of the float windows.
-	pub fn get_prev_float_index(& self, index:usize, saved:usize) -> Option<usize> {
-		let mut prev_index = self.windows.len() -1;
-		if index != 0{
-			prev_index = index - 1;
-		};		
-		if prev_index == saved {
-			None
-		}else{
-			if self.windows.get(prev_index).unwrap().float_or_tile == FloatOrTile::Float{
-				Some(prev_index)
-			}else{
-				self.get_prev_float_index(prev_index,saved)
 			}
 		}
 	}
@@ -570,7 +535,7 @@ impl FloatSupport for FloatingWM {
 		}
 	}
 }
-
+/*
 #[cfg(test)]
 mod tests {
 
@@ -1054,3 +1019,4 @@ mod tests {
 	}
 
 }
+*/

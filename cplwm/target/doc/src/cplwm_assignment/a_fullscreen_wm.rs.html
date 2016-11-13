@@ -673,6 +673,7 @@
 <span id="629">629</span>
 <span id="630">630</span>
 <span id="631">631</span>
+<span id="632">632</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Fullscreen Window Manager</span>
 <span class='doccomment'>//!</span>
@@ -1062,249 +1063,250 @@
 <span class='comment'>//</span>
 <span class='comment'>// The `#[cfg(test)]` annotation means that this code is only compiled when</span>
 <span class='comment'>// we&#39;re testing the code.</span>
-<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
-<span class='kw'>mod</span> <span class='ident'>tests</span> {
+<span class='comment'>/*
+#[cfg(test)]
+mod tests {
 
-    <span class='comment'>// We have to import `FullscreenWM` from the super module.</span>
-    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>FullscreenWM</span>;
-    <span class='comment'>// We have to repeat the imports we did in the super module.</span>
-    <span class='kw'>use</span> <span class='ident'>cplwm_api</span>::<span class='ident'>wm</span>::<span class='ident'>WindowManager</span>;
-    <span class='kw'>use</span> <span class='ident'>cplwm_api</span>::<span class='ident'>types</span>::<span class='op'>*</span>;
+    // We have to import `FullscreenWM` from the super module.
+    use super::FullscreenWM;
+    // We have to repeat the imports we did in the super module.
+    use cplwm_api::wm::WindowManager;
+    use cplwm_api::types::*;
 
-    <span class='comment'>// We define a static variable for the screen we will use in the tests.</span>
-    <span class='comment'>// You can just as well define it as a local variable in your tests.</span>
-    <span class='kw'>static</span> <span class='ident'>SCREEN</span>: <span class='ident'>Screen</span> <span class='op'>=</span> <span class='ident'>Screen</span> {
-        <span class='ident'>width</span>: <span class='number'>800</span>,
-        <span class='ident'>height</span>: <span class='number'>600</span>,
+    // We define a static variable for the screen we will use in the tests.
+    // You can just as well define it as a local variable in your tests.
+    static SCREEN: Screen = Screen {
+        width: 800,
+        height: 600,
     };
 
-	<span class='kw'>static</span> <span class='ident'>SCREEN2</span>: <span class='ident'>Screen</span> <span class='op'>=</span> <span class='ident'>Screen</span> {
-        <span class='ident'>width</span>: <span class='number'>1000</span>,
-        <span class='ident'>height</span>: <span class='number'>800</span>,
+	static SCREEN2: Screen = Screen {
+        width: 1000,
+        height: 800,
     };
-    <span class='comment'>// We define a static variable for the geometry of a fullscreen window.</span>
-    <span class='comment'>// Note that it matches the dimensions of `SCREEN`.</span>
-    <span class='kw'>static</span> <span class='ident'>SCREEN_GEOM</span>: <span class='ident'>Geometry</span> <span class='op'>=</span> <span class='ident'>Geometry</span> {
-        <span class='ident'>x</span>: <span class='number'>0</span>,
-        <span class='ident'>y</span>: <span class='number'>0</span>,
-        <span class='ident'>width</span>: <span class='number'>800</span>,
-        <span class='ident'>height</span>: <span class='number'>600</span>,
-    };
-
-    <span class='comment'>// We define a static variable for some random geometry that we will use</span>
-    <span class='comment'>// when adding windows to a window manager.</span>
-    <span class='kw'>static</span> <span class='ident'>SOME_GEOM</span>: <span class='ident'>Geometry</span> <span class='op'>=</span> <span class='ident'>Geometry</span> {
-        <span class='ident'>x</span>: <span class='number'>10</span>,
-        <span class='ident'>y</span>: <span class='number'>10</span>,
-        <span class='ident'>width</span>: <span class='number'>100</span>,
-        <span class='ident'>height</span>: <span class='number'>100</span>,
+    // We define a static variable for the geometry of a fullscreen window.
+    // Note that it matches the dimensions of `SCREEN`.
+    static SCREEN_GEOM: Geometry = Geometry {
+        x: 0,
+        y: 0,
+        width: 800,
+        height: 600,
     };
 
-
-    <span class='comment'>// Now let&#39;s write our test.</span>
-    <span class='comment'>//</span>
-    <span class='comment'>// Note that tests are annotated with `#[test]`, and cannot take arguments</span>
-    <span class='comment'>// nor return anything.</span>
-    <span class='attribute'>#[<span class='ident'>test</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>test_adding_and_removing_some_windows</span>() {
-        <span class='comment'>// Let&#39;s make a new `FullscreenWM` with `SCREEN` as screen.</span>
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>wm</span> <span class='op'>=</span> <span class='ident'>FullscreenWM</span>::<span class='ident'>new</span>(<span class='ident'>SCREEN</span>);
-
-        <span class='comment'>// Initially the window layout should be empty.</span>
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>WindowLayout</span>::<span class='ident'>new</span>(), <span class='ident'>wm</span>.<span class='ident'>get_window_layout</span>());
-        <span class='comment'>// `assert_eq!` is a macro that will check that the second argument,</span>
-        <span class='comment'>// the actual value, matches first value, the expected value.</span>
-
-        <span class='comment'>// Let&#39;s add a window</span>
-        <span class='ident'>wm</span>.<span class='ident'>add_window</span>(<span class='ident'>WindowWithInfo</span>::<span class='ident'>new_tiled</span>(<span class='number'>1</span>, <span class='ident'>SOME_GEOM</span>)).<span class='ident'>unwrap</span>();
-        <span class='comment'>// Because `add_window` returns a `Result`, we use `unwrap`, which</span>
-        <span class='comment'>// tries to extract the `Ok` value from the result, but will panic</span>
-        <span class='comment'>// (crash) when it is an `Err`. You must be very careful when using</span>
-        <span class='comment'>// `unwrap` in your code. Here we can use it because we know for sure</span>
-        <span class='comment'>// that an `Err` won&#39;t be returned, and even if that were the case,</span>
-        <span class='comment'>// the panic will simply cause the test to fail.</span>
-
-        <span class='comment'>// The window should now be managed by the WM</span>
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>wm</span>.<span class='ident'>is_managed</span>(<span class='number'>1</span>));
-        <span class='comment'>// and be present in the `Vec` of windows.</span>
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>1</span>], <span class='ident'>wm</span>.<span class='ident'>get_windows</span>());
-        <span class='comment'>// According to the window layout</span>
-        <span class='kw'>let</span> <span class='ident'>wl1</span> <span class='op'>=</span> <span class='ident'>wm</span>.<span class='ident'>get_window_layout</span>();
-        <span class='comment'>// it should be focused</span>
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='prelude-val'>Some</span>(<span class='number'>1</span>), <span class='ident'>wl1</span>.<span class='ident'>focused_window</span>);
-        <span class='comment'>// and fullscreen.</span>
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='macro'>vec</span><span class='macro'>!</span>[(<span class='number'>1</span>, <span class='ident'>SCREEN_GEOM</span>)], <span class='ident'>wl1</span>.<span class='ident'>windows</span>);
-
-        <span class='comment'>// Let&#39;s add another window.</span>
-        <span class='ident'>wm</span>.<span class='ident'>add_window</span>(<span class='ident'>WindowWithInfo</span>::<span class='ident'>new_tiled</span>(<span class='number'>2</span>, <span class='ident'>SOME_GEOM</span>)).<span class='ident'>unwrap</span>();
-        <span class='comment'>// It should now be managed by the WM.</span>
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>wm</span>.<span class='ident'>is_managed</span>(<span class='number'>2</span>));
-        <span class='comment'>// The `Vec` of windows should now contain both windows 1 and 2.</span>
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>1</span>, <span class='number'>2</span>], <span class='ident'>wm</span>.<span class='ident'>get_windows</span>());
-        <span class='comment'>// According to the window layout</span>
-        <span class='kw'>let</span> <span class='ident'>wl2</span> <span class='op'>=</span> <span class='ident'>wm</span>.<span class='ident'>get_window_layout</span>();
-        <span class='comment'>// window 2 should be focused</span>
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='prelude-val'>Some</span>(<span class='number'>2</span>), <span class='ident'>wl2</span>.<span class='ident'>focused_window</span>);
-        <span class='comment'>// and fullscreen.</span>
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='macro'>vec</span><span class='macro'>!</span>[(<span class='number'>2</span>, <span class='ident'>SCREEN_GEOM</span>)], <span class='ident'>wl2</span>.<span class='ident'>windows</span>);
-
-        <span class='comment'>// Now let&#39;s remove window 2</span>
-        <span class='ident'>wm</span>.<span class='ident'>remove_window</span>(<span class='number'>2</span>).<span class='ident'>unwrap</span>();
-        <span class='comment'>// It should no longer be managed by the WM.</span>
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='op'>!</span><span class='ident'>wm</span>.<span class='ident'>is_managed</span>(<span class='number'>2</span>));
-        <span class='comment'>// The `Vec` of windows should now just contain window 1.</span>
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>1</span>], <span class='ident'>wm</span>.<span class='ident'>get_windows</span>());
-        <span class='comment'>// According to the window layout</span>
-        <span class='kw'>let</span> <span class='ident'>wl3</span> <span class='op'>=</span> <span class='ident'>wm</span>.<span class='ident'>get_window_layout</span>();
-        <span class='comment'>// window 1 should be focused again</span>
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='prelude-val'>Some</span>(<span class='number'>1</span>), <span class='ident'>wl3</span>.<span class='ident'>focused_window</span>);
-        <span class='comment'>// and fullscreen.</span>
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='macro'>vec</span><span class='macro'>!</span>[(<span class='number'>1</span>, <span class='ident'>SCREEN_GEOM</span>)], <span class='ident'>wl3</span>.<span class='ident'>windows</span>);
+    // We define a static variable for some random geometry that we will use
+    // when adding windows to a window manager.
+    static SOME_GEOM: Geometry = Geometry {
+        x: 10,
+        y: 10,
+        width: 100,
+        height: 100,
+    };
 
 
-        <span class='comment'>// To run these tests, run the command `cargo test` in the `solution`</span>
-        <span class='comment'>// directory.</span>
-        <span class='comment'>//</span>
-        <span class='comment'>// To learn more about testing, check the Testing chapter of the Rust</span>
-        <span class='comment'>// Book: https://doc.rust-lang.org/book/testing.html</span>
+    // Now let&#39;s write our test.
+    //
+    // Note that tests are annotated with `#[test]`, and cannot take arguments
+    // nor return anything.
+    #[test]
+    fn test_adding_and_removing_some_windows() {
+        // Let&#39;s make a new `FullscreenWM` with `SCREEN` as screen.
+        let mut wm = FullscreenWM::new(SCREEN);
+
+        // Initially the window layout should be empty.
+        assert_eq!(WindowLayout::new(), wm.get_window_layout());
+        // `assert_eq!` is a macro that will check that the second argument,
+        // the actual value, matches first value, the expected value.
+
+        // Let&#39;s add a window
+        wm.add_window(WindowWithInfo::new_tiled(1, SOME_GEOM)).unwrap();
+        // Because `add_window` returns a `Result`, we use `unwrap`, which
+        // tries to extract the `Ok` value from the result, but will panic
+        // (crash) when it is an `Err`. You must be very careful when using
+        // `unwrap` in your code. Here we can use it because we know for sure
+        // that an `Err` won&#39;t be returned, and even if that were the case,
+        // the panic will simply cause the test to fail.
+
+        // The window should now be managed by the WM
+        assert!(wm.is_managed(1));
+        // and be present in the `Vec` of windows.
+        assert_eq!(vec![1], wm.get_windows());
+        // According to the window layout
+        let wl1 = wm.get_window_layout();
+        // it should be focused
+        assert_eq!(Some(1), wl1.focused_window);
+        // and fullscreen.
+        assert_eq!(vec![(1, SCREEN_GEOM)], wl1.windows);
+
+        // Let&#39;s add another window.
+        wm.add_window(WindowWithInfo::new_tiled(2, SOME_GEOM)).unwrap();
+        // It should now be managed by the WM.
+        assert!(wm.is_managed(2));
+        // The `Vec` of windows should now contain both windows 1 and 2.
+        assert_eq!(vec![1, 2], wm.get_windows());
+        // According to the window layout
+        let wl2 = wm.get_window_layout();
+        // window 2 should be focused
+        assert_eq!(Some(2), wl2.focused_window);
+        // and fullscreen.
+        assert_eq!(vec![(2, SCREEN_GEOM)], wl2.windows);
+
+        // Now let&#39;s remove window 2
+        wm.remove_window(2).unwrap();
+        // It should no longer be managed by the WM.
+        assert!(!wm.is_managed(2));
+        // The `Vec` of windows should now just contain window 1.
+        assert_eq!(vec![1], wm.get_windows());
+        // According to the window layout
+        let wl3 = wm.get_window_layout();
+        // window 1 should be focused again
+        assert_eq!(Some(1), wl3.focused_window);
+        // and fullscreen.
+        assert_eq!(vec![(1, SCREEN_GEOM)], wl3.windows);
+
+
+        // To run these tests, run the command `cargo test` in the `solution`
+        // directory.
+        //
+        // To learn more about testing, check the Testing chapter of the Rust
+        // Book: https://doc.rust-lang.org/book/testing.html
     }
 
-    <span class='attribute'>#[<span class='ident'>test</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>test_focus_window</span>() {
+    #[test]
+    fn test_focus_window() {
 
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>wm</span> <span class='op'>=</span> <span class='ident'>FullscreenWM</span>::<span class='ident'>new</span>(<span class='ident'>SCREEN</span>);
+        let mut wm = FullscreenWM::new(SCREEN);
 
-        <span class='comment'>//Add some windows</span>
-        <span class='ident'>wm</span>.<span class='ident'>add_window</span>(<span class='ident'>WindowWithInfo</span>::<span class='ident'>new_tiled</span>(<span class='number'>1</span>, <span class='ident'>SOME_GEOM</span>)).<span class='ident'>unwrap</span>();
-        <span class='ident'>wm</span>.<span class='ident'>add_window</span>(<span class='ident'>WindowWithInfo</span>::<span class='ident'>new_tiled</span>(<span class='number'>2</span>, <span class='ident'>SOME_GEOM</span>)).<span class='ident'>unwrap</span>();
-        <span class='ident'>wm</span>.<span class='ident'>add_window</span>(<span class='ident'>WindowWithInfo</span>::<span class='ident'>new_tiled</span>(<span class='number'>3</span>, <span class='ident'>SOME_GEOM</span>)).<span class='ident'>unwrap</span>();
-        <span class='ident'>wm</span>.<span class='ident'>add_window</span>(<span class='ident'>WindowWithInfo</span>::<span class='ident'>new_tiled</span>(<span class='number'>4</span>, <span class='ident'>SOME_GEOM</span>)).<span class='ident'>unwrap</span>();
-        <span class='ident'>wm</span>.<span class='ident'>add_window</span>(<span class='ident'>WindowWithInfo</span>::<span class='ident'>new_tiled</span>(<span class='number'>5</span>, <span class='ident'>SOME_GEOM</span>)).<span class='ident'>unwrap</span>();
+        //Add some windows
+        wm.add_window(WindowWithInfo::new_tiled(1, SOME_GEOM)).unwrap();
+        wm.add_window(WindowWithInfo::new_tiled(2, SOME_GEOM)).unwrap();
+        wm.add_window(WindowWithInfo::new_tiled(3, SOME_GEOM)).unwrap();
+        wm.add_window(WindowWithInfo::new_tiled(4, SOME_GEOM)).unwrap();
+        wm.add_window(WindowWithInfo::new_tiled(5, SOME_GEOM)).unwrap();
 
-        <span class='comment'>//No action is done</span>
-        <span class='ident'>wm</span>.<span class='ident'>focus_window</span>(<span class='prelude-val'>None</span>).<span class='ident'>unwrap</span>();
+        //No action is done
+        wm.focus_window(None).unwrap();
 
-        <span class='comment'>//Focus should be kept in window 5, since was the last insertion</span>
-        <span class='kw'>let</span> <span class='ident'>wl1</span> <span class='op'>=</span> <span class='ident'>wm</span>.<span class='ident'>get_window_layout</span>();
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='prelude-val'>Some</span>(<span class='number'>5</span>), <span class='ident'>wl1</span>.<span class='ident'>focused_window</span>);
+        //Focus should be kept in window 5, since was the last insertion
+        let wl1 = wm.get_window_layout();
+        assert_eq!(Some(5), wl1.focused_window);
         
-        <span class='comment'>//Window 10 is not in manager an UnknownWindow error should be thrown</span>
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>wm</span>.<span class='ident'>focus_window</span>(<span class='prelude-val'>Some</span>(<span class='number'>10</span>)).<span class='ident'>is_err</span>());
+        //Window 10 is not in manager an UnknownWindow error should be thrown
+        assert!(wm.focus_window(Some(10)).is_err());
 
-        <span class='comment'>//Focus to window 4</span>
-        <span class='ident'>wm</span>.<span class='ident'>focus_window</span>(<span class='prelude-val'>Some</span>(<span class='number'>4</span>)).<span class='ident'>unwrap</span>();
-        <span class='kw'>let</span> <span class='ident'>wl2</span> <span class='op'>=</span> <span class='ident'>wm</span>.<span class='ident'>get_window_layout</span>();
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='prelude-val'>Some</span>(<span class='number'>4</span>), <span class='ident'>wl2</span>.<span class='ident'>focused_window</span>);
+        //Focus to window 4
+        wm.focus_window(Some(4)).unwrap();
+        let wl2 = wm.get_window_layout();
+        assert_eq!(Some(4), wl2.focused_window);
 
-		<span class='comment'>//Focus to window 2</span>
-        <span class='ident'>wm</span>.<span class='ident'>focus_window</span>(<span class='prelude-val'>Some</span>(<span class='number'>2</span>)).<span class='ident'>unwrap</span>();
-        <span class='kw'>let</span> <span class='ident'>wl3</span> <span class='op'>=</span> <span class='ident'>wm</span>.<span class='ident'>get_window_layout</span>();
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='prelude-val'>Some</span>(<span class='number'>2</span>), <span class='ident'>wl3</span>.<span class='ident'>focused_window</span>);
+		//Focus to window 2
+        wm.focus_window(Some(2)).unwrap();
+        let wl3 = wm.get_window_layout();
+        assert_eq!(Some(2), wl3.focused_window);
 
-        <span class='comment'>//Focus to window 5</span>
-        <span class='ident'>wm</span>.<span class='ident'>focus_window</span>(<span class='prelude-val'>Some</span>(<span class='number'>5</span>)).<span class='ident'>unwrap</span>();
-        <span class='kw'>let</span> <span class='ident'>wl4</span> <span class='op'>=</span> <span class='ident'>wm</span>.<span class='ident'>get_window_layout</span>();
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='prelude-val'>Some</span>(<span class='number'>5</span>), <span class='ident'>wl4</span>.<span class='ident'>focused_window</span>);
+        //Focus to window 5
+        wm.focus_window(Some(5)).unwrap();
+        let wl4 = wm.get_window_layout();
+        assert_eq!(Some(5), wl4.focused_window);
     }
 
-    <span class='attribute'>#[<span class='ident'>test</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>test_cycle_focus</span>() {
+    #[test]
+    fn test_cycle_focus() {
 
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>wm</span> <span class='op'>=</span> <span class='ident'>FullscreenWM</span>::<span class='ident'>new</span>(<span class='ident'>SCREEN</span>);
+        let mut wm = FullscreenWM::new(SCREEN);
 
-        <span class='comment'>//Do nothing</span>
-        <span class='ident'>wm</span>.<span class='ident'>cycle_focus</span>(<span class='ident'>PrevOrNext</span>::<span class='ident'>Next</span>);
+        //Do nothing
+        wm.cycle_focus(PrevOrNext::Next);
 
-        <span class='comment'>//Add some windows</span>
-        <span class='ident'>wm</span>.<span class='ident'>add_window</span>(<span class='ident'>WindowWithInfo</span>::<span class='ident'>new_tiled</span>(<span class='number'>1</span>, <span class='ident'>SOME_GEOM</span>)).<span class='ident'>unwrap</span>();
-        <span class='ident'>wm</span>.<span class='ident'>add_window</span>(<span class='ident'>WindowWithInfo</span>::<span class='ident'>new_tiled</span>(<span class='number'>2</span>, <span class='ident'>SOME_GEOM</span>)).<span class='ident'>unwrap</span>();
-        <span class='ident'>wm</span>.<span class='ident'>add_window</span>(<span class='ident'>WindowWithInfo</span>::<span class='ident'>new_tiled</span>(<span class='number'>3</span>, <span class='ident'>SOME_GEOM</span>)).<span class='ident'>unwrap</span>();
-        <span class='ident'>wm</span>.<span class='ident'>add_window</span>(<span class='ident'>WindowWithInfo</span>::<span class='ident'>new_tiled</span>(<span class='number'>4</span>, <span class='ident'>SOME_GEOM</span>)).<span class='ident'>unwrap</span>();
-        <span class='ident'>wm</span>.<span class='ident'>add_window</span>(<span class='ident'>WindowWithInfo</span>::<span class='ident'>new_tiled</span>(<span class='number'>5</span>, <span class='ident'>SOME_GEOM</span>)).<span class='ident'>unwrap</span>();
+        //Add some windows
+        wm.add_window(WindowWithInfo::new_tiled(1, SOME_GEOM)).unwrap();
+        wm.add_window(WindowWithInfo::new_tiled(2, SOME_GEOM)).unwrap();
+        wm.add_window(WindowWithInfo::new_tiled(3, SOME_GEOM)).unwrap();
+        wm.add_window(WindowWithInfo::new_tiled(4, SOME_GEOM)).unwrap();
+        wm.add_window(WindowWithInfo::new_tiled(5, SOME_GEOM)).unwrap();
 
 
-        <span class='comment'>//Focus should be in window 4</span>
-        <span class='ident'>wm</span>.<span class='ident'>cycle_focus</span>(<span class='ident'>PrevOrNext</span>::<span class='ident'>Prev</span>);
-        <span class='kw'>let</span> <span class='ident'>wl1</span> <span class='op'>=</span> <span class='ident'>wm</span>.<span class='ident'>get_window_layout</span>();
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='prelude-val'>Some</span>(<span class='number'>4</span>), <span class='ident'>wl1</span>.<span class='ident'>focused_window</span>);
+        //Focus should be in window 4
+        wm.cycle_focus(PrevOrNext::Prev);
+        let wl1 = wm.get_window_layout();
+        assert_eq!(Some(4), wl1.focused_window);
 
-        <span class='comment'>//Focus should be in window 3</span>
-        <span class='ident'>wm</span>.<span class='ident'>cycle_focus</span>(<span class='ident'>PrevOrNext</span>::<span class='ident'>Prev</span>);
-        <span class='kw'>let</span> <span class='ident'>wl2</span> <span class='op'>=</span> <span class='ident'>wm</span>.<span class='ident'>get_window_layout</span>();
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='prelude-val'>Some</span>(<span class='number'>3</span>), <span class='ident'>wl2</span>.<span class='ident'>focused_window</span>);
+        //Focus should be in window 3
+        wm.cycle_focus(PrevOrNext::Prev);
+        let wl2 = wm.get_window_layout();
+        assert_eq!(Some(3), wl2.focused_window);
 
-		<span class='comment'>//Focus should be in window 4</span>
-        <span class='ident'>wm</span>.<span class='ident'>cycle_focus</span>(<span class='ident'>PrevOrNext</span>::<span class='ident'>Next</span>);
-        <span class='kw'>let</span> <span class='ident'>wl3</span> <span class='op'>=</span> <span class='ident'>wm</span>.<span class='ident'>get_window_layout</span>();
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='prelude-val'>Some</span>(<span class='number'>4</span>), <span class='ident'>wl3</span>.<span class='ident'>focused_window</span>);
+		//Focus should be in window 4
+        wm.cycle_focus(PrevOrNext::Next);
+        let wl3 = wm.get_window_layout();
+        assert_eq!(Some(4), wl3.focused_window);
 
-        <span class='comment'>//Focus should be in window 5</span>
-        <span class='ident'>wm</span>.<span class='ident'>cycle_focus</span>(<span class='ident'>PrevOrNext</span>::<span class='ident'>Next</span>);
-        <span class='kw'>let</span> <span class='ident'>wl4</span> <span class='op'>=</span> <span class='ident'>wm</span>.<span class='ident'>get_window_layout</span>();
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='prelude-val'>Some</span>(<span class='number'>5</span>), <span class='ident'>wl4</span>.<span class='ident'>focused_window</span>);
+        //Focus should be in window 5
+        wm.cycle_focus(PrevOrNext::Next);
+        let wl4 = wm.get_window_layout();
+        assert_eq!(Some(5), wl4.focused_window);
 
-        <span class='comment'>//Focus should be in window 1</span>
-        <span class='ident'>wm</span>.<span class='ident'>cycle_focus</span>(<span class='ident'>PrevOrNext</span>::<span class='ident'>Next</span>);
-        <span class='kw'>let</span> <span class='ident'>wl4</span> <span class='op'>=</span> <span class='ident'>wm</span>.<span class='ident'>get_window_layout</span>();
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='prelude-val'>Some</span>(<span class='number'>1</span>), <span class='ident'>wl4</span>.<span class='ident'>focused_window</span>);
+        //Focus should be in window 1
+        wm.cycle_focus(PrevOrNext::Next);
+        let wl4 = wm.get_window_layout();
+        assert_eq!(Some(1), wl4.focused_window);
 
-        <span class='comment'>//Focus should be in window 2</span>
-        <span class='ident'>wm</span>.<span class='ident'>cycle_focus</span>(<span class='ident'>PrevOrNext</span>::<span class='ident'>Next</span>);
-        <span class='kw'>let</span> <span class='ident'>wl5</span> <span class='op'>=</span> <span class='ident'>wm</span>.<span class='ident'>get_window_layout</span>();
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='prelude-val'>Some</span>(<span class='number'>2</span>), <span class='ident'>wl5</span>.<span class='ident'>focused_window</span>);
+        //Focus should be in window 2
+        wm.cycle_focus(PrevOrNext::Next);
+        let wl5 = wm.get_window_layout();
+        assert_eq!(Some(2), wl5.focused_window);
 
-		<span class='comment'>//Focus should be in window 6</span>
-        <span class='ident'>wm</span>.<span class='ident'>add_window</span>(<span class='ident'>WindowWithInfo</span>::<span class='ident'>new_tiled</span>(<span class='number'>6</span>, <span class='ident'>SOME_GEOM</span>)).<span class='ident'>unwrap</span>();
-        <span class='kw'>let</span> <span class='ident'>wl6</span> <span class='op'>=</span> <span class='ident'>wm</span>.<span class='ident'>get_window_layout</span>();
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='prelude-val'>Some</span>(<span class='number'>6</span>), <span class='ident'>wl6</span>.<span class='ident'>focused_window</span>);
+		//Focus should be in window 6
+        wm.add_window(WindowWithInfo::new_tiled(6, SOME_GEOM)).unwrap();
+        let wl6 = wm.get_window_layout();
+        assert_eq!(Some(6), wl6.focused_window);
 
-        <span class='comment'>//Focus should be in window 2</span>
-        <span class='ident'>wm</span>.<span class='ident'>cycle_focus</span>(<span class='ident'>PrevOrNext</span>::<span class='ident'>Prev</span>);
-        <span class='kw'>let</span> <span class='ident'>wl7</span> <span class='op'>=</span> <span class='ident'>wm</span>.<span class='ident'>get_window_layout</span>();
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='prelude-val'>Some</span>(<span class='number'>2</span>), <span class='ident'>wl7</span>.<span class='ident'>focused_window</span>);
+        //Focus should be in window 2
+        wm.cycle_focus(PrevOrNext::Prev);
+        let wl7 = wm.get_window_layout();
+        assert_eq!(Some(2), wl7.focused_window);
 
     }
 
-     <span class='attribute'>#[<span class='ident'>test</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>test_get_window_info</span>() {
+     #[test]
+    fn test_get_window_info() {
 
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>wm</span> <span class='op'>=</span> <span class='ident'>FullscreenWM</span>::<span class='ident'>new</span>(<span class='ident'>SCREEN</span>);
+        let mut wm = FullscreenWM::new(SCREEN);
 
-        <span class='comment'>//Add some windows</span>
-        <span class='ident'>wm</span>.<span class='ident'>add_window</span>(<span class='ident'>WindowWithInfo</span>::<span class='ident'>new_tiled</span>(<span class='number'>1</span>, <span class='ident'>SOME_GEOM</span>)).<span class='ident'>unwrap</span>();
-        <span class='ident'>wm</span>.<span class='ident'>add_window</span>(<span class='ident'>WindowWithInfo</span>::<span class='ident'>new_tiled</span>(<span class='number'>2</span>, <span class='ident'>SOME_GEOM</span>)).<span class='ident'>unwrap</span>();
-        <span class='ident'>wm</span>.<span class='ident'>add_window</span>(<span class='ident'>WindowWithInfo</span>::<span class='ident'>new_tiled</span>(<span class='number'>3</span>, <span class='ident'>SCREEN_GEOM</span>)).<span class='ident'>unwrap</span>();
-        <span class='ident'>wm</span>.<span class='ident'>add_window</span>(<span class='ident'>WindowWithInfo</span>::<span class='ident'>new_tiled</span>(<span class='number'>4</span>, <span class='ident'>SOME_GEOM</span>)).<span class='ident'>unwrap</span>();
-        <span class='ident'>wm</span>.<span class='ident'>add_window</span>(<span class='ident'>WindowWithInfo</span>::<span class='ident'>new_tiled</span>(<span class='number'>5</span>, <span class='ident'>SCREEN_GEOM</span>)).<span class='ident'>unwrap</span>();
+        //Add some windows
+        wm.add_window(WindowWithInfo::new_tiled(1, SOME_GEOM)).unwrap();
+        wm.add_window(WindowWithInfo::new_tiled(2, SOME_GEOM)).unwrap();
+        wm.add_window(WindowWithInfo::new_tiled(3, SCREEN_GEOM)).unwrap();
+        wm.add_window(WindowWithInfo::new_tiled(4, SOME_GEOM)).unwrap();
+        wm.add_window(WindowWithInfo::new_tiled(5, SCREEN_GEOM)).unwrap();
 
 
-        <span class='comment'>//screen 1 and 2 should have the smae geometry</span>
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>wm</span>.<span class='ident'>get_window_info</span>(<span class='number'>1</span>).<span class='ident'>unwrap</span>().<span class='ident'>geometry</span>, <span class='ident'>wm</span>.<span class='ident'>get_window_info</span>(<span class='number'>2</span>).<span class='ident'>unwrap</span>().<span class='ident'>geometry</span>);
+        //screen 1 and 2 should have the smae geometry
+        assert_eq!(wm.get_window_info(1).unwrap().geometry, wm.get_window_info(2).unwrap().geometry);
 
-        <span class='comment'>//As well as window 3 5</span>
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>wm</span>.<span class='ident'>get_window_info</span>(<span class='number'>3</span>).<span class='ident'>unwrap</span>().<span class='ident'>geometry</span>, <span class='ident'>wm</span>.<span class='ident'>get_window_info</span>(<span class='number'>5</span>).<span class='ident'>unwrap</span>().<span class='ident'>geometry</span>);
+        //As well as window 3 5
+        assert_eq!(wm.get_window_info(3).unwrap().geometry, wm.get_window_info(5).unwrap().geometry);
 
-		<span class='comment'>//window 5 has geometry SCREEN_GEOM</span>
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>SCREEN_GEOM</span>, <span class='ident'>wm</span>.<span class='ident'>get_window_info</span>(<span class='number'>5</span>).<span class='ident'>unwrap</span>().<span class='ident'>geometry</span>);
+		//window 5 has geometry SCREEN_GEOM
+        assert_eq!(SCREEN_GEOM, wm.get_window_info(5).unwrap().geometry);
 
-        <span class='comment'>//window 1 has geometry SOME_GEOM</span>
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>SOME_GEOM</span>, <span class='ident'>wm</span>.<span class='ident'>get_window_info</span>(<span class='number'>1</span>).<span class='ident'>unwrap</span>().<span class='ident'>geometry</span>);
+        //window 1 has geometry SOME_GEOM
+        assert_eq!(SOME_GEOM, wm.get_window_info(1).unwrap().geometry);
      }
 
-     <span class='attribute'>#[<span class='ident'>test</span>]</span>
-     <span class='kw'>fn</span> <span class='ident'>test_get_resize_screen</span>() {
+     #[test]
+     fn test_get_resize_screen() {
 
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>wm</span> <span class='op'>=</span> <span class='ident'>FullscreenWM</span>::<span class='ident'>new</span>(<span class='ident'>SCREEN</span>);
+        let mut wm = FullscreenWM::new(SCREEN);
 
-        <span class='comment'>//swm screen should be the same as SCREEN</span>
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>wm</span>.<span class='ident'>get_screen</span>(), <span class='ident'>SCREEN</span>);
+        //swm screen should be the same as SCREEN
+        assert_eq!(wm.get_screen(), SCREEN);
 
-        <span class='comment'>//now, swm screen should be the same as SCREEN</span>
-        <span class='ident'>wm</span>.<span class='ident'>resize_screen</span>(<span class='ident'>SCREEN2</span>);
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>wm</span>.<span class='ident'>get_screen</span>(), <span class='ident'>SCREEN2</span>);
+        //now, swm screen should be the same as SCREEN
+        wm.resize_screen(SCREEN2);
+        assert_eq!(wm.get_screen(), SCREEN2);
      }
 
-}
+}*/</span>
 </pre>
 </section>
     <section id='search' class="content hidden"></section>

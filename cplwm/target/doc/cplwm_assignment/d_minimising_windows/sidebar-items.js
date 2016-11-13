@@ -1,1 +1,1 @@
-initSidebarItems({"type":[["WMName","**TODO**: You are free to choose the name for your window manager. As we will use automated tests when grading your assignment, indicate here the name of your window manager data type so we can just use `WMName` instead of having to manually figure out your window manager name."]]});
+initSidebarItems({"enum":[["MinimisingWMError","**TODO**: Documentation"]],"struct":[["MinimisingWM","The MinimisingWM struct"]],"type":[["WMName","**TODO**: Documentation"]]});

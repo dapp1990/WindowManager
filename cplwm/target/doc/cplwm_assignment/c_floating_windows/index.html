@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-117' class='srclink' href='../../src/cplwm_assignment/src/c_floating_windows.rs.html#1-43' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-304' class='srclink' href='../../src/cplwm_assignment/c_floating_windows.rs.html#1-537' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Floating Windows</p>
 
 <p>Extend your window manager with support for floating windows, i.e. windows
@@ -70,21 +70,39 @@ about this assignment to the grader, e.g., you have a bug you can&#39;t fix,
 or you want to explain your approach, write it down after the comments
 section.</p>
 
-<p>COMPLETED: ?</p>
+<p>COMPLETED: Yes</p>
 
-<p>COMMENTS:</p>
-
-<p>...</p>
-</div><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
+<p>COMMENTS:
+The approach now is quite similar to b_tillin_vm, but now get_window_layout is changed. First processing floating windows 
+and then processing and append it to the vector, that way the first windows in the array will be the floating onces,
+hence the tiled windows will be cover by. No need to modify the windows attribute in the FloatingWM structure since
+the title are already saved with the given geometry whether it is tiled or floating. Additionally the logic of the ordered
+collection is keep it, so when there the cycle_focus change among tiled and floating windows. In case a floating window is
+changed to tiled window, the order is kept it so get_window_layout will allocated such windows in the order in it was added.
+tile_support has to be change to support only over windows with FloatOrTile::Tile</p>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.FloatingWM.html'
+                                  title='cplwm_assignment::c_floating_windows::FloatingWM'>FloatingWM</a></td>
+                           <td class='docblock short'>
+                                <p>The FloatingWM struct</p>
+                           </td>
+                       </tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.FloatingWMError.html'
+                                  title='cplwm_assignment::c_floating_windows::FloatingWMError'>FloatingWMError</a></td>
+                           <td class='docblock short'>
+                                <p><strong>TODO</strong>: Documentation</p>
+                           </td>
+                       </tr></table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
 <table>
                        <tr class=' module-item'>
                            <td><a class='type' href='type.WMName.html'
                                   title='cplwm_assignment::c_floating_windows::WMName'>WMName</a></td>
                            <td class='docblock short'>
-                                <p><strong>TODO</strong>: You are free to choose the name for your window manager. As we
-will use automated tests when grading your assignment, indicate here the
-name of your window manager data type so we can just use <code>WMName</code> instead
-of having to manually figure out your window manager name.</p>
+                                <p><strong>TODO</strong>: Documentation</p>
                            </td>
                        </tr></table></section>
     <section id='search' class="content hidden"></section>

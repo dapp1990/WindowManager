@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-126' class='srclink' href='../../src/cplwm_assignment/b_tiling_wm.rs.html#1-318' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-126' class='srclink' href='../../src/cplwm_assignment/b_tiling_wm.rs.html#1-396' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Tiling Window Manager</p>
 
 <p>Write a more complex window manager that will <em>tile</em> its windows. Tiling
@@ -63,11 +63,23 @@ about this assignment to the grader, e.g., you have a bug you can&#39;t fix,
 or you want to explain your approach, write it down after the comments
 section.</p>
 
-<p>COMPLETED: PARTIAL</p>
+<p>COMPLETED: YES</p>
 
 <p>COMMENTS:</p>
 
-<p>...</p>
+<p>General approach</p>
+
+<p>Since now we are dealing with a master window, the way the windows are added matter, according with the algorithm 
+new window should be added to the bottom right of the window. It is convenient to keep the order in our collection to
+adapt the different layout of the no-master windows. Also there is a new function that swap the layout of the master
+window with another window, so it is also handy to just look over the index of the given window and then make the change
+using the swap build-in method with the first element of the collection (which will be always represents the master window).
+Finally, if I want to keep the order of the collection and swap windows position without focused windows, the focused element
+then should be swap with the internal element of the collection and reorder the collection to get the correct focused element.
+To avoid such behavior, I store the index of focused window in the TillingWM structure. </p>
+
+<p>Even further according with the description of swap_windows() the focus window seems like an optional value, it is not 
+necessary the case that some window should be focus, so intead of just store a plain number index, a Option<int> will be stored</p>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
                        <tr class=' module-item'>

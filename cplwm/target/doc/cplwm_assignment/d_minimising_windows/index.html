@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-119' class='srclink' href='../../src/cplwm_assignment/src/d_minimising_windows.rs.html#1-40' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-546' class='srclink' href='../../src/cplwm_assignment/d_minimising_windows.rs.html#1-1026' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Minimising Windows</p>
 
 <p>Extend your window manager with support for (un)minimising windows. i.e.
@@ -68,21 +68,42 @@ about this assignment to the grader, e.g., you have a bug you can&#39;t fix,
 or you want to explain your approach, write it down after the comments
 section.</p>
 
-<p>COMPLETED: ?</p>
+<p>COMPLETED: PARTIAL</p>
 
 <p>COMMENTS:</p>
 
-<p>...</p>
-</div><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
+<p>it is a requesto to keep track of the position of them minised elements, the best way I concude to actually do this ordering
+is with a collection, in this case a vec is use to keep track the position minised elements, such vector it is par of the
+MinimisingWM structure. Moreover it is important to <em>remove</em> the minised element from the windows vector, however if the removed
+is used as it was implemented in the others window managers, we actually deleted from the windows vector which will be actually</p>
+
+<p>collection of minimised windows, this is one approach in which I can keep the order as I did with the floating and tiled windows
+so the approach is that MinimisingWM will have another attribute called minimised_windows which will be a vec of windows
+this vec will keep the order in which the windows are minimised. Once again get_window_layout should be updated to filter out
+the minised windows in order to show only the unminised windows.</p>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.MinimisingWM.html'
+                                  title='cplwm_assignment::d_minimising_windows::MinimisingWM'>MinimisingWM</a></td>
+                           <td class='docblock short'>
+                                <p>The MinimisingWM struct</p>
+                           </td>
+                       </tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.MinimisingWMError.html'
+                                  title='cplwm_assignment::d_minimising_windows::MinimisingWMError'>MinimisingWMError</a></td>
+                           <td class='docblock short'>
+                                <p><strong>TODO</strong>: Documentation</p>
+                           </td>
+                       </tr></table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
 <table>
                        <tr class=' module-item'>
                            <td><a class='type' href='type.WMName.html'
                                   title='cplwm_assignment::d_minimising_windows::WMName'>WMName</a></td>
                            <td class='docblock short'>
-                                <p><strong>TODO</strong>: You are free to choose the name for your window manager. As we
-will use automated tests when grading your assignment, indicate here the
-name of your window manager data type so we can just use <code>WMName</code> instead
-of having to manually figure out your window manager name.</p>
+                                <p><strong>TODO</strong>: Documentation</p>
                            </td>
                        </tr></table></section>
     <section id='search' class="content hidden"></section>
