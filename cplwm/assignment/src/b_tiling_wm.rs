@@ -66,6 +66,62 @@ pub struct TillingWM {
     pub index_foused_window: Option<usize>,
 }
 
+/// Supported functions
+impl TillingWM {
+    /// This method calculated the tiled window's geometries in the order of the
+    /// windows vector
+    //*** Improvement: here you calculate first thar windows is greater than 1, but could be thecase
+    // and not necessary it is a tiled window 
+    fn calculate_tiled_geometries(&mut self){
+        if !self.windows.is_empty(){
+
+                let divisor = (self.windows.len() - 1) as u32;
+                //let divisor = self.windows.len() - non_tiled_windows;
+
+                // if the divisor is greater than 0 we need to calculate slave windows
+                //if divisor > 0{
+                if divisor > 0{
+                    let height_side = self.screen.height / divisor;
+                    let width_side = self.screen.width / 2;
+                    let x_point = (self.screen.width / 2) as i32;
+                    // It is already tested that there is more than 1 window, hence one can use unwrap method being sure that a 
+                    // Some intance of option will be returned
+                    let master_window = self.get_master_window().unwrap();
+
+                    let mut y_point = 0 as i32;
+
+                    for tiled_window in self.windows.iter_mut(){
+                        if master_window != tiled_window.window {
+                            // I calculate the values of the secondary windows (right windows)
+                            let rigth_geometry = Geometry {
+                                x: x_point,
+                                y: y_point,
+                                width: width_side,
+                                height: height_side,
+                            };
+                            tiled_window.geometry = rigth_geometry;
+                            y_point += (height_side) as i32;
+
+                        }else{
+                            // I calculate the values for master window
+                            let  master_geometry = Geometry { 
+                                x: 0,
+                                y: 0,
+                                width: width_side,
+                                height: self.screen.height,
+                            };
+                            tiled_window.geometry = master_geometry;
+                        }
+                    };
+                }else{
+                    // There is the master window
+                    let window = self.windows.get_mut(0).unwrap();
+                    window.geometry = self.screen.to_geometry();
+                }
+        };
+    }
+}
+
 /// **TODO**: Documentation
 #[derive(Debug)]
 pub enum TillingWMError {
@@ -128,11 +184,13 @@ impl WindowManager for TillingWM {
     }
 
     // By default, add_window still focuses the new added window
+    /*** Improvement: thrown error when the added window is not tilling ***/
     fn add_window(&mut self, window_with_info: WindowWithInfo) -> Result<(), Self::Error> {
         if !self.is_managed(window_with_info.window) {
             self.windows.push(window_with_info);
             let temp = self.windows.len() - 1;
             self.index_foused_window = Some(temp);
+            self.calculate_tiled_geometries();
             Ok(())
         }else{
         	Err(TillingWMError::ManagedWindow(window_with_info.window))
@@ -155,7 +213,10 @@ impl WindowManager for TillingWM {
                 			self.index_foused_window = None;
                 			Ok(())
                 		}else{
-                			let temp = index - 1;
+                			let mut temp = index;
+                            if index > i{
+                                temp = index - 1;
+                            }
                 			self.index_foused_window = Some(temp);
                 			Ok(())
                 		}
@@ -333,72 +394,76 @@ impl WindowManager for TillingWM {
 
 impl TilingSupport for TillingWM {
 
-	fn get_master_window(&self) -> Option<Window>{
-		if !self.windows.is_empty(){
-			//Using unwrap because there should be at leat on element since the collection is not empty
-			Some(self.windows.get(0).unwrap().window)
-		}else{
-			None
-		}
-	}
+    fn get_master_window(&self) -> Option<Window>{
+        if !self.windows.is_empty(){
+            Some(self.windows.get(0).unwrap().window)
+        }else{
+            None
+        }
+    }
 
-	fn swap_with_master(&mut self, window: Window) -> Result<(), Self::Error>{
-		match self.windows.iter().position(|w| (*w).window == window) {
+    fn swap_with_master(&mut self, window: Window) -> Result<(), Self::Error>{
+        match self.windows.iter().position(|w| (*w).window == window) {
             None => Err(TillingWMError::UnknownWindow(window)),
             Some(i) => {
-            	self.windows.swap(0, i);
-            	let temp_master = self.get_master_window();
-            	self.focus_window(temp_master)
+                self.windows.swap(0, i);
+                let temp_master = self.get_master_window();
+                self.calculate_tiled_geometries();
+                self.focus_window(temp_master)
             }
         }
-	}
+    }
 
 
-	// Simlar approach than cycle_focus, but now the structure should be aupdated accordingly, that behavior can be done
-	// with the swap built-in method 
-	fn swap_windows(&mut self, dir: PrevOrNext){
-		if self.windows.len() > 1 {
-			match self.index_foused_window {
-				// no focused window = nothing
-				None => (),
+    // Simlar approach than cycle_focus, but now the structure should be updated accordingly, that behavior can be done
+    // with the swap built-in method 
+    fn swap_windows(&mut self, dir: PrevOrNext){
+        if self.windows.len() > 1 {
+            match self.index_foused_window {
+                // no focused window = nothing
+                None => (),
 
-				Some(index) => {
-					match dir {
-			            PrevOrNext::Prev => {
-			            	if index != 0{
-								let temp = index - 1;
-			            		self.index_foused_window = Some(temp);
-			            		self.windows.swap(index, temp);
-			            	}else{
-			            		let temp = self.windows.len() - 1;
-			            		self.index_foused_window = Some(temp);
-			            		self.windows.swap(0, temp);
-			            	}
-			            }
+                Some(index) => {
+                    match dir {
+                        PrevOrNext::Prev => {
+                            if index != 0{
+                                let temp = index - 1;
+                                self.index_foused_window = Some(temp);
+                                self.windows.swap(index, temp);
+                                self.calculate_tiled_geometries();
+                            }else{
+                                let temp = self.windows.len() - 1;
+                                self.index_foused_window = Some(temp);
+                                self.windows.swap(0, temp);
+                                self.calculate_tiled_geometries();
+                            }
+                        }
 
-			            PrevOrNext::Next => {
-			            	let last_index = self.windows.len() - 1;
-			            	if index != last_index{
-								let temp = index + 1;
-								self.index_foused_window = Some(temp);
-								self.windows.swap(index, temp);
-			            	}else{
-			            		self.windows.swap(last_index, 0);
-			            		self.index_foused_window = Some(0);
-			            	}
-			            }
-			         }
-				}
-			}
-		}
-	}
-
+                        PrevOrNext::Next => {
+                            let last_index = self.windows.len() - 1;
+                            if index != last_index{
+                                let temp = index + 1;
+                                self.index_foused_window = Some(temp);
+                                self.windows.swap(index, temp);
+                                self.calculate_tiled_geometries();
+                            }else{
+                                self.windows.swap(last_index, 0);
+                                self.index_foused_window = Some(0);
+                                self.calculate_tiled_geometries();
+                            }
+                        }
+                     }
+                }
+            }
+        }
+    }
 }
 
+/*
 #[cfg(test)]
 mod tests {
 
-    // We have to import `FloatingWM` from the super module.
+    // We have to import `TillingWM` from the super module.
     use super::TillingWM;
     // We have to repeat the imports we did in the super module.
     use cplwm_api::wm::WindowManager;
@@ -441,8 +506,8 @@ mod tests {
 
     #[test]
     fn test_adding_and_removing_some_windows() {
-        // Let's make a new `FloatingWM` with `SCREEN` as screen.
-        let mut wm = FloatingWM::new(SCREEN);
+        // Let's make a new `TillingWM` with `SCREEN` as screen.
+        let mut wm = TillingWM::new(SCREEN);
 
         assert_eq!(WindowLayout::new(), wm.get_window_layout());
 
@@ -541,7 +606,7 @@ mod tests {
     #[test]
     fn test_focus_window() {
 
-        let mut wm = FloatingWM::new(SCREEN);
+        let mut wm = TillingWM::new(SCREEN);
 
         //Add some windows
         wm.add_window(WindowWithInfo::new_tiled(1, SOME_GEOM)).unwrap();
@@ -586,7 +651,7 @@ mod tests {
     #[test]
     fn test_cycle_focus() {
 
-        let mut wm = FloatingWM::new(SCREEN);
+        let mut wm = TillingWM::new(SCREEN);
 
         //Do nothing
         wm.cycle_focus(PrevOrNext::Next);
@@ -644,14 +709,12 @@ mod tests {
     #[test]
     fn test_get_window_info() {
 
-        let mut wm = FloatingWM::new(SCREEN);
+        let mut wm = TillingWM::new(SCREEN);
 
         //Add some windows
         wm.add_window(WindowWithInfo::new_tiled(1, SOME_GEOM)).unwrap();
         wm.add_window(WindowWithInfo::new_tiled(2, SOME_GEOM)).unwrap();
-        wm.add_window(WindowWithInfo::new_float(3, SCREEN_GEOM)).unwrap();
         wm.add_window(WindowWithInfo::new_tiled(4, SOME_GEOM)).unwrap();
-        wm.add_window(WindowWithInfo::new_float(5, SOME_GEOM)).unwrap();
         wm.add_window(WindowWithInfo::new_tiled(6, SOME_GEOM)).unwrap();
 
 
@@ -688,16 +751,14 @@ mod tests {
 
         assert_eq!(wm.get_window_info(1).unwrap().geometry, master_half);
         assert_eq!(wm.get_window_info(2).unwrap().geometry, first_half);
-        assert_eq!(wm.get_window_info(3).unwrap().geometry, SCREEN_GEOM);
         assert_eq!(wm.get_window_info(4).unwrap().geometry, second_half);
-        assert_eq!(wm.get_window_info(5).unwrap().geometry, SOME_GEOM);
         assert_eq!(wm.get_window_info(6).unwrap().geometry, third_half);
     }
 
     #[test]
     fn test_get_resize_screen() {
 
-        let mut wm = FloatingWM::new(SCREEN);
+        let mut wm = TillingWM::new(SCREEN);
 
         //swm screen should be the same as SCREEN
         assert_eq!(wm.get_screen(), SCREEN);
@@ -710,7 +771,7 @@ mod tests {
     #[test]
     fn test_tiling_support() {
 
-        let mut wm = FloatingWM::new(SCREEN);
+        let mut wm = TillingWM::new(SCREEN);
 
         // No window yet
         assert_eq!(None, wm.get_master_window());
@@ -817,14 +878,6 @@ mod tests {
         
         assert!(wm.get_windows().is_empty());
         assert_eq!(wm.get_master_window(),None);
-
-        // The other direction of the arrow must
-        // not hold, e.g., there could floating windows (see `FloatSupport`), but
-        // no tiled windows.
-        wm.add_window(WindowWithInfo::new_float(90, SOME_GEOM)).unwrap();
-        wm.add_window(WindowWithInfo::new_float(80, SOME_GEOM)).unwrap();
-        assert_eq!(wm.get_master_window(),None);
-        assert!(!wm.get_windows().is_empty());
-
     }
 }
+*/

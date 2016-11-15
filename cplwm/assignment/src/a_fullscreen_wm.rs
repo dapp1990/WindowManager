@@ -116,6 +116,19 @@ pub struct FullscreenWM {
 }
 
 
+/// Supported functions
+impl FullscreenWM {
+    /// This method calculated the tiled window's geometries in the order of the
+    /// windows vector
+    //*** Improvement: here you calculate first thar windows is greater than 1, but could be thecase
+    // and not necessary it is a tiled window 
+    fn update_geometries(&mut self){
+        for full_screen_window in self.windows.iter_mut(){
+            full_screen_window.geometry = self.screen.to_geometry();                        
+        };
+    }
+}
+
 /// The errors that this window manager can return.
 ///
 /// For more information about why you need this, read the documentation of
@@ -219,8 +232,13 @@ impl WindowManager for FullscreenWM {
     /// the info, this *could* lead to issues in later assignments.
     fn add_window(&mut self, window_with_info: WindowWithInfo) -> Result<(), Self::Error> {
         if !self.is_managed(window_with_info.window) {
+            let fullscreen_window = WindowWithInfo {
+                window: window_with_info.window, 
+                geometry: self.screen.to_geometry(), 
+                float_or_tile: window_with_info.float_or_tile, 
+                fullscreen: window_with_info.fullscreen,};
             //	self.windows.push(window_with_info.window);
-            self.windows.push_back(window_with_info);
+            self.windows.push_back(fullscreen_window);
         }
         Ok(())
     }
@@ -260,7 +278,6 @@ impl WindowManager for FullscreenWM {
     ///   we can just return an empty `WindowLayout`.
     ///
     fn get_window_layout(&self) -> WindowLayout {
-        let fullscreen_geometry = self.screen.to_geometry();
         //	match self.windows.last() {
         //	Updated to substract window from WindowWithInfo
         if !self.windows.is_empty(){
@@ -273,7 +290,7 @@ impl WindowManager for FullscreenWM {
 	                    focused_window: Some((*w).window),
 	                    // ... and should fill the screen. The other windows are
 	                    // simply hidden.
-	                    windows: vec![((*w).window, fullscreen_geometry)],
+	                    windows: vec![((*w).window, (*w).geometry)],
 	                }
 	            }
 	            // Otherwise, return an empty WindowLayout
@@ -377,7 +394,8 @@ impl WindowManager for FullscreenWM {
     /*** Approach ***/
     // I just take update screen attribute of FullscreenWM
     fn resize_screen(&mut self, screen: Screen) {
-        self.screen = screen
+        self.screen = screen;
+        self.update_geometries()
     }
 }
 
@@ -386,11 +404,12 @@ impl WindowManager for FullscreenWM {
 //
 // The `#[cfg(test)]` annotation means that this code is only compiled when
 // we're testing the code.
-/*
+
+
 #[cfg(test)]
 mod tests {
 
-    // We have to import `FullscreenWM` from the super module.
+    // We have to import `TillingWM` from the super module.
     use super::FullscreenWM;
     // We have to repeat the imports we did in the super module.
     use cplwm_api::wm::WindowManager;
@@ -403,7 +422,7 @@ mod tests {
         height: 600,
     };
 
-	static SCREEN2: Screen = Screen {
+    static SCREEN2: Screen = Screen {
         width: 1000,
         height: 800,
     };
@@ -425,21 +444,19 @@ mod tests {
         height: 100,
     };
 
-
     // Now let's write our test.
     //
     // Note that tests are annotated with `#[test]`, and cannot take arguments
     // nor return anything.
+
     #[test]
     fn test_adding_and_removing_some_windows() {
         // Let's make a new `FullscreenWM` with `SCREEN` as screen.
         let mut wm = FullscreenWM::new(SCREEN);
-
         // Initially the window layout should be empty.
         assert_eq!(WindowLayout::new(), wm.get_window_layout());
         // `assert_eq!` is a macro that will check that the second argument,
         // the actual value, matches first value, the expected value.
-
         // Let's add a window
         wm.add_window(WindowWithInfo::new_tiled(1, SOME_GEOM)).unwrap();
         // Because `add_window` returns a `Result`, we use `unwrap`, which
@@ -448,7 +465,6 @@ mod tests {
         // `unwrap` in your code. Here we can use it because we know for sure
         // that an `Err` won't be returned, and even if that were the case,
         // the panic will simply cause the test to fail.
-
         // The window should now be managed by the WM
         assert!(wm.is_managed(1));
         // and be present in the `Vec` of windows.
@@ -459,7 +475,6 @@ mod tests {
         assert_eq!(Some(1), wl1.focused_window);
         // and fullscreen.
         assert_eq!(vec![(1, SCREEN_GEOM)], wl1.windows);
-
         // Let's add another window.
         wm.add_window(WindowWithInfo::new_tiled(2, SOME_GEOM)).unwrap();
         // It should now be managed by the WM.
@@ -472,7 +487,6 @@ mod tests {
         assert_eq!(Some(2), wl2.focused_window);
         // and fullscreen.
         assert_eq!(vec![(2, SCREEN_GEOM)], wl2.windows);
-
         // Now let's remove window 2
         wm.remove_window(2).unwrap();
         // It should no longer be managed by the WM.
@@ -485,8 +499,6 @@ mod tests {
         assert_eq!(Some(1), wl3.focused_window);
         // and fullscreen.
         assert_eq!(vec![(1, SCREEN_GEOM)], wl3.windows);
-
-
         // To run these tests, run the command `cargo test` in the `solution`
         // directory.
         //
@@ -506,13 +518,15 @@ mod tests {
         wm.add_window(WindowWithInfo::new_tiled(4, SOME_GEOM)).unwrap();
         wm.add_window(WindowWithInfo::new_tiled(5, SOME_GEOM)).unwrap();
 
-        //No action is done
+        //Now an action should be applied, even when it given in this wm if the vec windows is not empty
+        // it must hold that there is a focused window.
+        //The only way in which no focused window exists is when there is no widnows
         wm.focus_window(None).unwrap();
 
-        //Focus should be kept in window 5, since was the last insertion
+        //Focused window should return 5
         let wl1 = wm.get_window_layout();
         assert_eq!(Some(5), wl1.focused_window);
-        
+
         //Window 10 is not in manager an UnknownWindow error should be thrown
         assert!(wm.focus_window(Some(10)).is_err());
 
@@ -521,7 +535,7 @@ mod tests {
         let wl2 = wm.get_window_layout();
         assert_eq!(Some(4), wl2.focused_window);
 
-		//Focus to window 2
+        //Focus to window 2
         wm.focus_window(Some(2)).unwrap();
         let wl3 = wm.get_window_layout();
         assert_eq!(Some(2), wl3.focused_window);
@@ -530,6 +544,14 @@ mod tests {
         wm.focus_window(Some(5)).unwrap();
         let wl4 = wm.get_window_layout();
         assert_eq!(Some(5), wl4.focused_window);
+
+        wm.remove_window(5).unwrap();
+        wm.focus_window(Some(1)).unwrap();
+        wm.remove_window(1).unwrap();
+        //Because the last focused window was removed, the focused_window attribute should be the second botton element
+        // in this case window 2
+        let wl5 = wm.get_window_layout();
+        assert_eq!(Some(2), wl5.focused_window);
     }
 
     #[test]
@@ -540,7 +562,7 @@ mod tests {
         //Do nothing
         wm.cycle_focus(PrevOrNext::Next);
 
-        //Add some windows
+        //Add some both type of windows
         wm.add_window(WindowWithInfo::new_tiled(1, SOME_GEOM)).unwrap();
         wm.add_window(WindowWithInfo::new_tiled(2, SOME_GEOM)).unwrap();
         wm.add_window(WindowWithInfo::new_tiled(3, SOME_GEOM)).unwrap();
@@ -558,7 +580,7 @@ mod tests {
         let wl2 = wm.get_window_layout();
         assert_eq!(Some(3), wl2.focused_window);
 
-		//Focus should be in window 4
+        //Focus should be in window 4
         wm.cycle_focus(PrevOrNext::Next);
         let wl3 = wm.get_window_layout();
         assert_eq!(Some(4), wl3.focused_window);
@@ -578,19 +600,20 @@ mod tests {
         let wl5 = wm.get_window_layout();
         assert_eq!(Some(2), wl5.focused_window);
 
-		//Focus should be in window 6
+        //Focus should be in window 6, since is added 
         wm.add_window(WindowWithInfo::new_tiled(6, SOME_GEOM)).unwrap();
         let wl6 = wm.get_window_layout();
         assert_eq!(Some(6), wl6.focused_window);
 
-        //Focus should be in window 2
+        //Now focus should previous should be 2, since was 6 was added at the bottom of the vec, then it was added when the vec
+        // has a the following order [3,4,5,1,2]
         wm.cycle_focus(PrevOrNext::Prev);
         let wl7 = wm.get_window_layout();
         assert_eq!(Some(2), wl7.focused_window);
 
     }
 
-     #[test]
+    #[test]
     fn test_get_window_info() {
 
         let mut wm = FullscreenWM::new(SCREEN);
@@ -598,26 +621,27 @@ mod tests {
         //Add some windows
         wm.add_window(WindowWithInfo::new_tiled(1, SOME_GEOM)).unwrap();
         wm.add_window(WindowWithInfo::new_tiled(2, SOME_GEOM)).unwrap();
-        wm.add_window(WindowWithInfo::new_tiled(3, SCREEN_GEOM)).unwrap();
         wm.add_window(WindowWithInfo::new_tiled(4, SOME_GEOM)).unwrap();
-        wm.add_window(WindowWithInfo::new_tiled(5, SCREEN_GEOM)).unwrap();
+        wm.add_window(WindowWithInfo::new_tiled(6, SOME_GEOM)).unwrap();
 
 
-        //screen 1 and 2 should have the smae geometry
-        assert_eq!(wm.get_window_info(1).unwrap().geometry, wm.get_window_info(2).unwrap().geometry);
+        //All screens should have the same size, fullscreen geometry
 
-        //As well as window 3 5
-        assert_eq!(wm.get_window_info(3).unwrap().geometry, wm.get_window_info(5).unwrap().geometry);
+        let full_screen = Geometry {
+            x: 0,
+            y: 0,
+            width: 800,
+            height: 600,
+        };
 
-		//window 5 has geometry SCREEN_GEOM
-        assert_eq!(SCREEN_GEOM, wm.get_window_info(5).unwrap().geometry);
+        assert_eq!(wm.get_window_info(1).unwrap().geometry, full_screen);
+        assert_eq!(wm.get_window_info(2).unwrap().geometry, full_screen);
+        assert_eq!(wm.get_window_info(4).unwrap().geometry, full_screen);
+        assert_eq!(wm.get_window_info(6).unwrap().geometry, full_screen);
+    }
 
-        //window 1 has geometry SOME_GEOM
-        assert_eq!(SOME_GEOM, wm.get_window_info(1).unwrap().geometry);
-     }
-
-     #[test]
-     fn test_get_resize_screen() {
+    #[test]
+    fn test_get_resize_screen() {
 
         let mut wm = FullscreenWM::new(SCREEN);
 
@@ -627,6 +651,5 @@ mod tests {
         //now, swm screen should be the same as SCREEN
         wm.resize_screen(SCREEN2);
         assert_eq!(wm.get_screen(), SCREEN2);
-     }
-
-}*/
+    }
+}
