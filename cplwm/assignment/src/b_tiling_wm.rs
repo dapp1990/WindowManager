@@ -395,11 +395,10 @@ impl TilingSupport for TillingWM {
 
 }
 
-/*
 #[cfg(test)]
 mod tests {
 
-    // We have to import `TillingWM` from the super module.
+    // We have to import `FloatingWM` from the super module.
     use super::TillingWM;
     // We have to repeat the imports we did in the super module.
     use cplwm_api::wm::WindowManager;
@@ -413,7 +412,7 @@ mod tests {
         height: 600,
     };
 
-	static SCREEN2: Screen = Screen {
+    static SCREEN2: Screen = Screen {
         width: 1000,
         height: 800,
     };
@@ -435,31 +434,20 @@ mod tests {
         height: 100,
     };
 
-
     // Now let's write our test.
     //
     // Note that tests are annotated with `#[test]`, and cannot take arguments
     // nor return anything.
+
     #[test]
     fn test_adding_and_removing_some_windows() {
-        // Let's make a new `TillingWM` with `SCREEN` as screen.
-        let mut wm = TillingWM::new(SCREEN);
+        // Let's make a new `FloatingWM` with `SCREEN` as screen.
+        let mut wm = FloatingWM::new(SCREEN);
 
-        // Initially the window layout should be empty.
         assert_eq!(WindowLayout::new(), wm.get_window_layout());
-        // `assert_eq!` is a macro that will check that the second argument,
-        // the actual value, matches first value, the expected value.
 
-        // Let's add a window
         wm.add_window(WindowWithInfo::new_tiled(1, SOME_GEOM)).unwrap();
-        // Because `add_window` returns a `Result`, we use `unwrap`, which
-        // tries to extract the `Ok` value from the result, but will panic
-        // (crash) when it is an `Err`. You must be very careful when using
-        // `unwrap` in your code. Here we can use it because we know for sure
-        // that an `Err` won't be returned, and even if that were the case,
-        // the panic will simply cause the test to fail.
 
-        // The window should now be managed by the WM
         assert!(wm.is_managed(1));
         // and be present in the `Vec` of windows.
         assert_eq!(vec![1], wm.get_windows());
@@ -482,18 +470,18 @@ mod tests {
         assert_eq!(Some(2), wl2.focused_window);
         // and should be half of the screen.
         let first_half = Geometry {
-	        x: 0,
-	        y: 0,
-	        width: 400,
-	        height: 600,
-	    };
+            x: 0,
+            y: 0,
+            width: 400,
+            height: 600,
+        };
 
         let second_half = Geometry {
-	        x: 400,
-	        y: 0,
-	        width: 400,
-	        height: 600,
-	    };
+            x: 400,
+            y: 0,
+            width: 400,
+            height: 600,
+        };
 
         assert_eq!(vec![(1, first_half),(2, second_half)], wl2.windows);
 
@@ -510,33 +498,33 @@ mod tests {
         // and fullscreen.
         assert_eq!(vec![(1, SCREEN_GEOM)], wl3.windows);
 
-		let third_half = Geometry {
-			x: 400,
-			y: 0,
-			width: 400,
-			height: 150,
-		};
+        let third_half = Geometry {
+            x: 400,
+            y: 0,
+            width: 400,
+            height: 150,
+        };
 
         let fourth_half = Geometry {
-	        x: 400,
-	        y: 150,
-	        width: 400,
-	        height: 150,
-	    };
+            x: 400,
+            y: 150,
+            width: 400,
+            height: 150,
+        };
 
-	    let fifth_half = Geometry {
-	        x: 400,
-	        y: 300,
-	        width: 400,
-	        height: 150,
-	    };
+        let fifth_half = Geometry {
+            x: 400,
+            y: 300,
+            width: 400,
+            height: 150,
+        };
 
-	    let sixth_half = Geometry {
-	        x: 400,
-	        y: 450,
-	        width: 400,
-	        height: 150,
-	    };
+        let sixth_half = Geometry {
+            x: 400,
+            y: 450,
+            width: 400,
+            height: 150,
+        };
         // I add more window, which shoudl be allocated in the right side of the window
         wm.add_window(WindowWithInfo::new_tiled(3, SOME_GEOM)).unwrap();
         wm.add_window(WindowWithInfo::new_tiled(4, SOME_GEOM)).unwrap();
@@ -553,7 +541,7 @@ mod tests {
     #[test]
     fn test_focus_window() {
 
-        let mut wm = TillingWM::new(SCREEN);
+        let mut wm = FloatingWM::new(SCREEN);
 
         //Add some windows
         wm.add_window(WindowWithInfo::new_tiled(1, SOME_GEOM)).unwrap();
@@ -568,7 +556,7 @@ mod tests {
         //Focused window should return None
         let wl1 = wm.get_window_layout();
         assert_eq!(None, wl1.focused_window);
-        
+
         //Window 10 is not in manager an UnknownWindow error should be thrown
         assert!(wm.focus_window(Some(10)).is_err());
 
@@ -577,7 +565,7 @@ mod tests {
         let wl2 = wm.get_window_layout();
         assert_eq!(Some(4), wl2.focused_window);
 
-		//Focus to window 2
+        //Focus to window 2
         wm.focus_window(Some(2)).unwrap();
         let wl3 = wm.get_window_layout();
         assert_eq!(Some(2), wl3.focused_window);
@@ -598,16 +586,16 @@ mod tests {
     #[test]
     fn test_cycle_focus() {
 
-        let mut wm = TillingWM::new(SCREEN);
+        let mut wm = FloatingWM::new(SCREEN);
 
         //Do nothing
         wm.cycle_focus(PrevOrNext::Next);
 
-        //Add some windows
+        //Add some both type of windows
         wm.add_window(WindowWithInfo::new_tiled(1, SOME_GEOM)).unwrap();
-        wm.add_window(WindowWithInfo::new_tiled(2, SOME_GEOM)).unwrap();
+        wm.add_window(WindowWithInfo::new_float(2, SOME_GEOM)).unwrap();
         wm.add_window(WindowWithInfo::new_tiled(3, SOME_GEOM)).unwrap();
-        wm.add_window(WindowWithInfo::new_tiled(4, SOME_GEOM)).unwrap();
+        wm.add_window(WindowWithInfo::new_float(4, SOME_GEOM)).unwrap();
         wm.add_window(WindowWithInfo::new_tiled(5, SOME_GEOM)).unwrap();
 
 
@@ -621,7 +609,7 @@ mod tests {
         let wl2 = wm.get_window_layout();
         assert_eq!(Some(3), wl2.focused_window);
 
-		//Focus should be in window 4
+        //Focus should be in window 4
         wm.cycle_focus(PrevOrNext::Next);
         let wl3 = wm.get_window_layout();
         assert_eq!(Some(4), wl3.focused_window);
@@ -641,7 +629,7 @@ mod tests {
         let wl5 = wm.get_window_layout();
         assert_eq!(Some(2), wl5.focused_window);
 
-		//Focus should be in window 6, since is added 
+        //Focus should be in window 6, since is added 
         wm.add_window(WindowWithInfo::new_tiled(6, SOME_GEOM)).unwrap();
         let wl6 = wm.get_window_layout();
         assert_eq!(Some(6), wl6.focused_window);
@@ -653,36 +641,63 @@ mod tests {
 
     }
 
-     #[test]
+    #[test]
     fn test_get_window_info() {
 
-        let mut wm = TillingWM::new(SCREEN);
+        let mut wm = FloatingWM::new(SCREEN);
 
         //Add some windows
         wm.add_window(WindowWithInfo::new_tiled(1, SOME_GEOM)).unwrap();
         wm.add_window(WindowWithInfo::new_tiled(2, SOME_GEOM)).unwrap();
-        wm.add_window(WindowWithInfo::new_tiled(3, SCREEN_GEOM)).unwrap();
+        wm.add_window(WindowWithInfo::new_float(3, SCREEN_GEOM)).unwrap();
         wm.add_window(WindowWithInfo::new_tiled(4, SOME_GEOM)).unwrap();
-        wm.add_window(WindowWithInfo::new_tiled(5, SCREEN_GEOM)).unwrap();
+        wm.add_window(WindowWithInfo::new_float(5, SOME_GEOM)).unwrap();
+        wm.add_window(WindowWithInfo::new_tiled(6, SOME_GEOM)).unwrap();
 
 
-        //screen 1 and 2 should have the smae geometry
-        assert_eq!(wm.get_window_info(1).unwrap().geometry, wm.get_window_info(2).unwrap().geometry);
+        //All screens should have different size, since now we are dealing with 
+        // tiled funtions, it should be reflec since they are added, removed or toggled
 
-        //As well as window 3 5
-        assert_eq!(wm.get_window_info(3).unwrap().geometry, wm.get_window_info(5).unwrap().geometry);
+        let master_half = Geometry {
+            x: 0,
+            y: 0,
+            width: 400,
+            height: 600,
+        };
 
-		//window 5 has geometry SCREEN_GEOM
-        assert_eq!(SCREEN_GEOM, wm.get_window_info(5).unwrap().geometry);
+        let first_half = Geometry {
+            x: 400,
+            y: 0,
+            width: 400,
+            height: 200,
+        };
 
-        //window 1 has geometry SOME_GEOM
-        assert_eq!(SOME_GEOM, wm.get_window_info(1).unwrap().geometry);
-     }
+        let second_half = Geometry {
+            x: 400,
+            y: 200,
+            width: 400,
+            height: 200,
+        };
 
-     #[test]
-     fn test_get_resize_screen() {
+        let third_half = Geometry {
+            x: 400,
+            y: 400,
+            width: 400,
+            height: 200,
+        };
 
-        let mut wm = TillingWM::new(SCREEN);
+        assert_eq!(wm.get_window_info(1).unwrap().geometry, master_half);
+        assert_eq!(wm.get_window_info(2).unwrap().geometry, first_half);
+        assert_eq!(wm.get_window_info(3).unwrap().geometry, SCREEN_GEOM);
+        assert_eq!(wm.get_window_info(4).unwrap().geometry, second_half);
+        assert_eq!(wm.get_window_info(5).unwrap().geometry, SOME_GEOM);
+        assert_eq!(wm.get_window_info(6).unwrap().geometry, third_half);
+    }
+
+    #[test]
+    fn test_get_resize_screen() {
+
+        let mut wm = FloatingWM::new(SCREEN);
 
         //swm screen should be the same as SCREEN
         assert_eq!(wm.get_screen(), SCREEN);
@@ -690,12 +705,12 @@ mod tests {
         //now, swm screen should be the same as SCREEN
         wm.resize_screen(SCREEN2);
         assert_eq!(wm.get_screen(), SCREEN2);
-     }
+    }
 
-	#[test]
-	fn test_tiling_support() {
+    #[test]
+    fn test_tiling_support() {
 
-        let mut wm = TillingWM::new(SCREEN);
+        let mut wm = FloatingWM::new(SCREEN);
 
         // No window yet
         assert_eq!(None, wm.get_master_window());
@@ -715,14 +730,17 @@ mod tests {
         assert_eq!(Some(4), wl1.focused_window);
 
         //swapping from master to master, no swap action is taken. Focused window is changed, though.
+        
         wm.swap_with_master(1).unwrap();
         let wl2 = wm.get_window_layout();
+
         assert_eq!(Some(1), wl2.focused_window);
 
-		//swapping from master to window 3, now window 3 is master window and is focused
+        //swapping from master to window 3, now window 3 is master window and is focused
         wm.swap_with_master(3).unwrap();
         let wl3 = wm.get_window_layout();
         assert_eq!(Some(3), wm.get_master_window());         
+
         assert_eq!(Some(3), wl3.focused_window);         
 
         //Traying to swap from master to an unknown window, erro is thrown
@@ -732,50 +750,81 @@ mod tests {
         //using swap_windows(PrevOrNext::Prev) should be allocate windows 4 as master window and put window 3 in the bottom right corner
         // of the window. Moreover windows 3 should be focused.
         let master_half = Geometry {
-			x: 0,
-			y: 0,
-			width: 400,
-			height: 600,
-		};
+            x: 0,
+            y: 0,
+            width: 400,
+            height: 600,
+        };
 
         let first_half = Geometry {
-			x: 400,
-			y: 0,
-			width: 400,
-			height: 200,
-		};
+            x: 400,
+            y: 0,
+            width: 400,
+            height: 200,
+        };
 
         let second_half = Geometry {
-	        x: 400,
-	        y: 200,
-	        width: 400,
-	        height: 200,
-	    };
+            x: 400,
+            y: 200,
+            width: 400,
+            height: 200,
+        };
 
-	    let third_half = Geometry {
-	        x: 400,
-	        y: 400,
-	        width: 400,
-	        height: 200,
-	    };
-      
-      	let wl4a = wm.get_window_layout();
-       	assert_eq!(vec![(3, master_half),(2, first_half),(1, second_half),(4, third_half)], wl4a.windows);
+        let third_half = Geometry {
+            x: 400,
+            y: 400,
+            width: 400,
+            height: 200,
+        };
+
+        let wl4a = wm.get_window_layout();
+        assert_eq!(vec![(3, master_half),(2, first_half),(1, second_half),(4, third_half)], wl4a.windows);
 
 
         wm.swap_windows(PrevOrNext::Prev);
         let wl4 = wm.get_window_layout();
         assert_eq!(Some(4), wm.get_master_window());
-       	assert_eq!(Some(3), wl4.focused_window);
-       	assert_eq!(vec![(4, master_half),(2, first_half),(1, second_half),(3, third_half)], wl4.windows);
+        assert_eq!(Some(3), wl4.focused_window);
+        assert_eq!(vec![(4, master_half),(2, first_half),(1, second_half),(3, third_half)], wl4.windows);
 
-       	//I change focused to master window and apply swap_windows(PrevOrNext::Next), the result should be window 2 as 
-       	// master window while windows 4 is focused
-		wm.focus_window(Some(4)).unwrap();
-       	wm.swap_windows(PrevOrNext::Next);
+        //I change focused to master window and apply swap_windows(PrevOrNext::Next), the result should be window 2 as 
+        // master window while windows 4 is focused
+        wm.focus_window(Some(4)).unwrap();
+        wm.swap_windows(PrevOrNext::Next);
         let wl5 = wm.get_window_layout();
         assert_eq!(Some(2), wm.get_master_window());
-       	assert_eq!(Some(4), wl5.focused_window);
-       	assert_eq!(vec![(2, master_half),(4, first_half),(1, second_half),(3, third_half)], wl5.windows);
+        assert_eq!(Some(4), wl5.focused_window);
+        assert_eq!(vec![(2, master_half),(4, first_half),(1, second_half),(3, third_half)], wl5.windows);
+        
+        // **Invariant**: if `swap_with_master(w)` succeeds, `get_master_window()
+        // == Some(w)`.
+        wm.swap_with_master(1).unwrap();
+        assert_eq!(wm.get_master_window(),Some(1));
+
+        // **Invariant**: `get_master_window() == Some(w)`, then `w` must occur
+        // in the vector returned by `get_windows()`.
+        
+        let master_window = wm.get_master_window().unwrap();
+        let windows = wm.get_windows();
+        assert!(windows.contains(&master_window));
+
+        // **Invariant**: if the vector returned by `get_windows()` is empty =>
+        // `get_master_window() == None`.
+        wm.remove_window(2).unwrap();
+        wm.remove_window(3).unwrap();
+        wm.remove_window(4).unwrap();
+        wm.remove_window(1).unwrap();
+        
+        assert!(wm.get_windows().is_empty());
+        assert_eq!(wm.get_master_window(),None);
+
+        // The other direction of the arrow must
+        // not hold, e.g., there could floating windows (see `FloatSupport`), but
+        // no tiled windows.
+        wm.add_window(WindowWithInfo::new_float(90, SOME_GEOM)).unwrap();
+        wm.add_window(WindowWithInfo::new_float(80, SOME_GEOM)).unwrap();
+        assert_eq!(wm.get_master_window(),None);
+        assert!(!wm.get_windows().is_empty());
+
     }
-}*/
+}

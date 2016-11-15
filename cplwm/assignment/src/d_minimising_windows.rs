@@ -748,7 +748,6 @@ impl MinimiseSupport for MinimisingWM {
 }
 
 /*
-
 #[cfg(test)]
 mod tests {
 
