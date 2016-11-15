@@ -216,6 +216,46 @@ impl WindowManager for FloatingWM {
 		}
 	}
 
+	fn remove_window(&mut self, window: Window) -> Result<(), Self::Error> {
+		match self.windows.iter().position(|w| (*w).window == window) {
+			None => Err(MinimisingWMError::UnknownWindow(window)),
+			Some(i) => { 
+				let temp_window = self.windows.get(i).unwrap().clone();
+				self.windows.remove(i);
+				
+				if temp_window.minimised {
+					self.remove_minimised_window(temp_window.window);
+				};
+
+				if temp_window.float_or_tile == FloatOrTile::Tile{
+					self.calculate_tiled_geometries();
+				};
+				match self.index_foused_window {
+					None => Ok(()),
+
+					Some(index) => {
+						//If the focused_element is the one that is erased,
+						// None focused elemente
+						if index == i {
+							self.index_foused_window = None;
+							Ok(())
+						}else{
+							// If the focused_element in the right side of the vector
+							// the focused elemente is keep it, otherwise the focused
+							// index is decreased by one.
+							let mut temp = index;
+							if index > i{
+								temp = index - 1;
+							}
+							self.index_foused_window = Some(temp);
+							Ok(())
+						}
+					}
+				} 
+			}
+		}
+	}
+
 	/// I opt to filter the vec of the FloatingWM structure. First I filter the tiled windows, they are processed exactly like 
 	/// in b_tilling_wm and attache them to the temporal vec. Then I get the windows with the attribute FloatOrTile::Float, I 
 	/// obtain the Geometries (which are already saved in the vector) and add them to the temporal vec. 
@@ -535,7 +575,7 @@ impl FloatSupport for FloatingWM {
 		}
 	}
 }
-/*
+
 #[cfg(test)]
 mod tests {
 
@@ -576,7 +616,6 @@ mod tests {
 		height: 100,
 	};
 
-
 	// Now let's write our test.
 	//
 	// Note that tests are annotated with `#[test]`, and cannot take arguments
@@ -587,21 +626,10 @@ mod tests {
 		// Let's make a new `FloatingWM` with `SCREEN` as screen.
 		let mut wm = FloatingWM::new(SCREEN);
 
-		// Initially the window layout should be empty.
 		assert_eq!(WindowLayout::new(), wm.get_window_layout());
-		// `assert_eq!` is a macro that will check that the second argument,
-		// the actual value, matches first value, the expected value.
 
-		// Let's add a window
 		wm.add_window(WindowWithInfo::new_tiled(1, SOME_GEOM)).unwrap();
-		// Because `add_window` returns a `Result`, we use `unwrap`, which
-		// tries to extract the `Ok` value from the result, but will panic
-		// (crash) when it is an `Err`. You must be very careful when using
-		// `unwrap` in your code. Here we can use it because we know for sure
-		// that an `Err` won't be returned, and even if that were the case,
-		// the panic will simply cause the test to fail.
 
-		// The window should now be managed by the WM
 		assert!(wm.is_managed(1));
 		// and be present in the `Vec` of windows.
 		assert_eq!(vec![1], wm.get_windows());
@@ -803,22 +831,49 @@ mod tests {
 		//Add some windows
 		wm.add_window(WindowWithInfo::new_tiled(1, SOME_GEOM)).unwrap();
 		wm.add_window(WindowWithInfo::new_tiled(2, SOME_GEOM)).unwrap();
-		wm.add_window(WindowWithInfo::new_tiled(3, SCREEN_GEOM)).unwrap();
+		wm.add_window(WindowWithInfo::new_float(3, SCREEN_GEOM)).unwrap();
 		wm.add_window(WindowWithInfo::new_tiled(4, SOME_GEOM)).unwrap();
-		wm.add_window(WindowWithInfo::new_tiled(5, SCREEN_GEOM)).unwrap();
+		wm.add_window(WindowWithInfo::new_float(5, SOME_GEOM)).unwrap();
+		wm.add_window(WindowWithInfo::new_tiled(6, SOME_GEOM)).unwrap();
 
 
-		//screen 1 and 2 should have the smae geometry
-		assert_eq!(wm.get_window_info(1).unwrap().geometry, wm.get_window_info(2).unwrap().geometry);
+		//All screens should have different size, since now we are dealing with 
+		// tiled funtions, it should be reflec since they are added, removed or toggled
 
-		//As well as window 3 5
-		assert_eq!(wm.get_window_info(3).unwrap().geometry, wm.get_window_info(5).unwrap().geometry);
+		let master_half = Geometry {
+			x: 0,
+			y: 0,
+			width: 400,
+			height: 600,
+		};
 
-		//window 5 has geometry SCREEN_GEOM
-		assert_eq!(SCREEN_GEOM, wm.get_window_info(5).unwrap().geometry);
+		let first_half = Geometry {
+			x: 400,
+			y: 0,
+			width: 400,
+			height: 200,
+		};
 
-		//window 1 has geometry SOME_GEOM
-		assert_eq!(SOME_GEOM, wm.get_window_info(1).unwrap().geometry);
+		let second_half = Geometry {
+			x: 400,
+			y: 200,
+			width: 400,
+			height: 200,
+		};
+
+		let third_half = Geometry {
+			x: 400,
+			y: 400,
+			width: 400,
+			height: 200,
+		};
+
+		assert_eq!(wm.get_window_info(1).unwrap().geometry, master_half);
+		assert_eq!(wm.get_window_info(2).unwrap().geometry, first_half);
+		assert_eq!(wm.get_window_info(3).unwrap().geometry, SCREEN_GEOM);
+		assert_eq!(wm.get_window_info(4).unwrap().geometry, second_half);
+		assert_eq!(wm.get_window_info(5).unwrap().geometry, SOME_GEOM);
+		assert_eq!(wm.get_window_info(6).unwrap().geometry, third_half);
 	}
 
 	#[test]
@@ -923,6 +978,36 @@ mod tests {
 		assert_eq!(Some(4), wl5.focused_window);
 		assert_eq!(vec![(2, master_half),(4, first_half),(1, second_half),(3, third_half)], wl5.windows);
 		
+		// **Invariant**: if `swap_with_master(w)` succeeds, `get_master_window()
+    	// == Some(w)`.
+    	wm.swap_with_master(1).unwrap();
+    	assert_eq!(wm.get_master_window(),Some(1));
+
+		// **Invariant**: `get_master_window() == Some(w)`, then `w` must occur
+    	// in the vector returned by `get_windows()`.
+    	
+    	let master_window = wm.get_master_window().unwrap();
+    	let windows = wm.get_windows();
+    	assert!(windows.contains(&master_window));
+
+    	// **Invariant**: if the vector returned by `get_windows()` is empty =>
+    	// `get_master_window() == None`.
+    	wm.remove_window(2).unwrap();
+    	wm.remove_window(3).unwrap();
+    	wm.remove_window(4).unwrap();
+    	wm.remove_window(1).unwrap();
+    	
+    	assert!(wm.get_windows().is_empty());
+		assert_eq!(wm.get_master_window(),None);
+
+    	// The other direction of the arrow must
+    	// not hold, e.g., there could floating windows (see `FloatSupport`), but
+    	// no tiled windows.
+		wm.add_window(WindowWithInfo::new_float(90, SOME_GEOM)).unwrap();
+		wm.add_window(WindowWithInfo::new_float(80, SOME_GEOM)).unwrap();
+    	assert_eq!(wm.get_master_window(),None);
+    	assert!(!wm.get_windows().is_empty());
+
 	}
 
 
@@ -951,7 +1036,7 @@ mod tests {
 
 		// now let check the layout, where tiled windows should be at the begining of the vec while floating elements,
 		// should at the last, both floating elements should have SOME_GEOM as geometry.
-		// The remining elements should have a proper geometry dependin in its position [2,3,5]
+		// The remining elements should have a proper geometry depending in its position [2,3,5]
 		let master_half = Geometry {
 			x: 0,
 			y: 0,
@@ -1016,7 +1101,34 @@ mod tests {
 		let wl3 = wm.get_window_layout();
 		assert_eq!(vec![(1, master_half),(2, first_half_a),(3, second_half_a),(5, third_half_a),(4,SCREEN_GEOM)], wl3.windows);
 
-	}
+    	// **Invariant**: if `is_floating(w) == true` for some window `w`, then
+    	// `is_managed(w) == true`.
+		assert_eq!(wm.is_floating(4), true);
+		assert_eq!(wm.is_managed(4), true);
 
+    	// **Invariant**: `is_floating(w) == true` for some window `w`, iff the
+    	// vector returned by the `get_floating_windows` method contains `w`.
+    	assert_eq!(wm.is_floating(4), true);
+		assert_eq!(vec![4], wm.get_floating_windows());
+
+		// **Invariant**: if calling `toggle_floating(w)` with a tiled window `w`
+    	// succeeds, `is_floating(w)` must return `true`.
+    	assert_eq!(wm.is_floating(1), false);
+    	wm.toggle_floating(1).unwrap();
+		assert_eq!(wm.is_floating(1), true);
+
+		// **Invariant**: if calling `toggle_floating(w)` with a floating window
+    	// `w` succeeds, `is_floating(w)` must return `false`.
+    	assert_eq!(wm.is_floating(4), true);
+    	wm.toggle_floating(4).unwrap();
+    	assert_eq!(wm.is_floating(4), false);
+
+		// **Invariant**: the result of `is_floating(w)` must be the same before
+    	// and after calling `toggle_floating(w)` twice.
+    	assert_eq!(wm.is_floating(5), false);
+    	wm.toggle_floating(5).unwrap();
+    	wm.toggle_floating(5).unwrap();
+    	assert_eq!(wm.is_floating(5), false);
+
+	}
 }
-*/

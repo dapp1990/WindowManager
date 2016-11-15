@@ -747,6 +747,8 @@ impl MinimiseSupport for MinimisingWM {
     }
 }
 
+/*
+
 #[cfg(test)]
 mod tests {
 
@@ -1384,5 +1386,4 @@ mod tests {
     	assert_eq!(wm.is_minimised(5), true);
     	assert_eq!(vec![5,4,6], wm.get_minimised_windows());
 	}
-
-}
+}*/

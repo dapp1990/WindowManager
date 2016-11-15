@@ -77,7 +77,7 @@ pub mod c_floating_windows;
 pub mod d_minimising_windows;
 
 // Optional assignments
-// pub mod e_fullscreen_windows;
+pub mod e_fullscreen_windows;
 // pub mod f_gaps;
 // pub mod g_multiple_workspaces;
 // pub mod h_different_tiling_layout;
