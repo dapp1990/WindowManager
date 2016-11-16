@@ -122,11 +122,6 @@ impl FloatingWM {
 		}
 	}
 
-	// helper function to get the master index if it exists
-	// in this case it is neccesary since it is possible that master windows is not the first element
-	// of the vec
-	// logic is similar to get_master_window
-
 	/// get the master window index
 	///
 	/// the logic of the b_tilling_wm reminds, the first tiled element of the list is the master window, 
@@ -141,7 +136,7 @@ impl FloatingWM {
 		}
 	}
 
-	/// This method calculated the geometries of window.
+	/// This method calculated the geometries of windows.
 	fn update_geometries(&mut self){
 		if !self.windows.is_empty(){
 
@@ -241,7 +236,7 @@ impl WindowManager for FloatingWM {
 
 	type Error = FloatingWMError;
 
-	/// The TillingWM constructor.
+	/// The FloatingWM constructor.
     ///
     /// windows is initialised as empty vec, screen as the given screen and focused index as None.
 	fn new(screen: Screen) -> FloatingWM {
@@ -304,7 +299,7 @@ impl WindowManager for FloatingWM {
 		}
 	}
 
-	/// removes the given window form the window manager.
+	/// removes the given window from the window manager.
     ///
 	/// Every time that a element is remove the index_foused_window should be updated if it is necessary. 
     /// Important to noticy here is that when the focused element is the same as the removed element, no focused window is set.
@@ -490,17 +485,14 @@ impl TilingSupport for FloatingWM {
     ///
     /// In this window manager the first tiled element of the *windows* vec is always the master window.
 	fn get_master_window(&self) -> Option<Window>{
-
 		if !self.windows.is_empty(){
-			//Now we have to look over the vec and select the first tiled window
-			match self.windows.iter().position(|w| (*w).float_or_tile == FloatOrTile::Tile) {  
-				//it could be the case that no tiled window exist
-				None => None,
-				Some(index) => Some(self.windows.get(index).unwrap().window)
+				match self.get_master_index() {
+					None => None,
+					Some(index) => Some(self.windows.get(index).unwrap().window),
+				}
+			}else{
+				None
 			}
-		}else{
-			None			
-		}
 	}
 
 	/// swap the position of the given window with the master window.

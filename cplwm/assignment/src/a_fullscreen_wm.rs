@@ -61,9 +61,9 @@ pub struct FullscreenWM {
 
 /// Complementary functions for FullscreenWM
 impl FullscreenWM {
-    /// This method calculated the geometries of window
+    /// This method calculated the geometries of windows.
     ///
-    /// This is a naive implementation since all windows in this window manager has the same size
+    /// This is a naive implementation since all windows in this window manager has the same size.
     fn update_geometries(&mut self){
         for full_screen_window in self.windows.iter_mut(){
             full_screen_window.geometry = self.screen.to_geometry();                        

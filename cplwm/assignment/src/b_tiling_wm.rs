@@ -64,7 +64,7 @@ pub struct TillingWM {
 
 /// Supported functions
 impl TillingWM {
-    /// This method calculated the geometries of window.
+    /// This method calculated the geometries of windows.
     ///
     /// when it is called, updates the geometry of each individual window according with the order in which imposed by *windows*,
     /// which implies that always the first element of *windows* will be the master window.
