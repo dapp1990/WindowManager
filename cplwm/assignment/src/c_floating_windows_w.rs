@@ -27,32 +27,27 @@
 //! COMPLETED: Yes
 //!
 //! COMMENTS:
-//!
-//! ## General approach
-//!
-//!	The approach now is quite similar to b_tillin_vm, but now update_geometries is changed. First processing tiled windows 
-//! and then floating windows.
-//!
-//! Now the WindowWithInfo structure is decomposed and a new structured is created since now it is important to save the floating geometry
-//! of the window, even when it is a tiled one.
-//!
-//! Additionally the logic of the ordered collection is keep it, so when there the cycle_focus change among tiled and floating windows. 
-//! In case a floating window is changed to tiled window, the order is kept it so get_window_layout will return such windows in the order 
-//! in of the current *windows* vec.
+//!	The approach now is quite similar to b_tillin_vm, but now get_window_layout is changed. First processing floating windows 
+//! and then processing and append it to the vector, that way the first windows in the array will be the floating onces,
+//! hence the tiled windows will be cover by. No need to modify the windows attribute in the FloatingWM structure since
+//! the title are already saved with the given geometry whether it is tiled or floating. Additionally the logic of the ordered
+//! collection is keep it, so when there the cycle_focus change among tiled and floating windows. In case a floating window is
+//! changed to tiled window, the order is kept it so get_window_layout will allocated such windows in the order in it was added.
+//! tile_support has to be change to support only over windows with FloatOrTile::Tile
 
 // Add imports here
 use std::error;
 use std::fmt;
+
 use cplwm_api::types::{PrevOrNext, Screen, Window, WindowLayout, WindowWithInfo, Geometry, FloatOrTile};
 use cplwm_api::wm::WindowManager;
 use cplwm_api::wm::TilingSupport;
 use cplwm_api::wm::FloatSupport;
 
-
-/// Window manager aliase.
+/// **TODO**: Documentation
 pub type WMName = FloatingWM;
 
-/// The FloatingWindow struct
+/// 
 #[derive(RustcDecodable, RustcEncodable, Debug, Clone)]
 pub struct FloatingWindow {
 	/// The window.
@@ -68,24 +63,24 @@ pub struct FloatingWindow {
 }
 
 /// The FloatingWM struct
+///
+/// # Example Representation
+/// Similar as previous exercises
+/// 
 #[derive(RustcDecodable, RustcEncodable, Debug, Clone)]
 pub struct FloatingWM {
-	/// A vector of FloatingWindow, it keeps the order in which the windows were added or 
-    /// the order affect by functions *swap_with_master* and *swap_windows*, 
+	/// **TODO**: No need to used a complex collection
 	pub windows: Vec<FloatingWindow>,  
-	/// The size of the screen.
+	/// **TODO**: Documentation
 	pub screen: Screen,
-	/// The index of the focused window in the *windows*, if there is no focused window a None is found.
+	/// The index of the focused window in the collection, if there is no focused window a None is placed
 	pub index_foused_window: Option<usize>,
 }
 
 /// Supported functions
 impl FloatingWM {
-
-	/// return the next tiled window from the given index
-	///
-	/// it loops over the *windows* vec in its current order, it loops over it until either the next right side tile index is found or
-	/// it reached the given index (in which a None is returned)
+	/// Get the next index by the given index of the tiled windows.
+	// when the end of the list is reached, tthen start to loop
 	pub fn get_next_tile_index(& self, index:usize, saved:usize) -> Option<usize> {
 		let mut next_index = 0;		
 		if self.windows.len()-1 > index{
@@ -102,10 +97,7 @@ impl FloatingWM {
 		}
 	}
 
-	/// return the previous tiled window from the given index
-	///
-	/// it loops over the *windows* vec in its current order, it loops over it until either the next left side tile index is found or
-	/// it reached the given index (in which a None is returned)
+	/// Get the previous index by the given index of the tiled windows.
 	pub fn get_prev_tile_index(& self, index:usize, saved:usize) -> Option<usize> {
 		let mut prev_index = self.windows.len() -1;
 		if index != 0{
@@ -126,13 +118,6 @@ impl FloatingWM {
 	// in this case it is neccesary since it is possible that master windows is not the first element
 	// of the vec
 	// logic is similar to get_master_window
-
-	/// get the master window index
-	///
-	/// the logic of the b_tilling_wm reminds, the first tiled element of the list is the master window, 
-	/// since I also keep the order in which the windows were added in first instance, one can added floating windows
-	/// so I have to look for the first tiled window in the *windows* vec. It is also possible that there is no tiled window
-	/// in which case a None is return
 	fn get_master_index(&self) -> Option<usize>{
 		if !self.windows.is_empty(){
 			self.windows.iter().position(|w| (*w).float_or_tile == FloatOrTile::Tile)
@@ -141,8 +126,11 @@ impl FloatingWM {
 		}
 	}
 
-	/// This method calculated the geometries of window.
-	fn update_geometries(&mut self){
+	/// This method calculated the tiled window's geometries in the order of the
+	/// windows vector
+	//*** Improvement: here you calculate first thar windows is greater than 1, but could be thecase
+	// and not necessary it is a tiled window 
+	fn calculate_tiled_geometries(&mut self){
 		if !self.windows.is_empty(){
 
 				//Divisor now should be update to just the tiled windows
@@ -201,16 +189,16 @@ impl FloatingWM {
 	}
 }
 
-/// The errors that this window manager can return.
+/// **TODO**: Documentation
 #[derive(Debug)]
 pub enum FloatingWMError {
-	/// This window is not known by the window manager.
-    UnknownWindow(Window),
-    /// This window is already managed by this window manager
-    ManagedWindow(Window),
-	/// This window is not a floating window
+	/// **TODO**: Documentation
+	UnknownWindow(Window),
+	/// **TODO**: Documentation
+	ManagedWindow(Window),
+	/// **TODO**: Documentation
 	NoFloatingWindow(Window),
-	/// This window is not a tiled window
+	/// **TODO**: Documentation
 	NoTiledWindow(Window),
 }
 
@@ -241,9 +229,7 @@ impl WindowManager for FloatingWM {
 
 	type Error = FloatingWMError;
 
-	/// The TillingWM constructor.
-    ///
-    /// windows is initialised as empty vec, screen as the given screen and focused index as None.
+	// Method modified
 	fn new(screen: Screen) -> FloatingWM {
 		FloatingWM {
 			windows: Vec::new(),
@@ -252,7 +238,6 @@ impl WindowManager for FloatingWM {
 		}
 	}
 
-	/// Returns all the managed windows in the window manager.
 	fn get_windows(&self) -> Vec<Window> {
 		let mut temp_windows = Vec::new();
 		for window_with_info in self.windows.iter() {
@@ -261,9 +246,7 @@ impl WindowManager for FloatingWM {
 		temp_windows
 	}
 
-	/// gets the current focused window.
-    ///
-    /// The list can be no empty and no focused window simultaneously.
+	// get focused work for both floating and tiled windows
 	fn get_focused_window(&self) -> Option<Window> {
 		if !self.windows.is_empty(){ 
 			match self.index_foused_window {
@@ -275,14 +258,7 @@ impl WindowManager for FloatingWM {
 		}
 	}
 
-	/// adds new window_with_info to the vec windows and set the geometry to fullscreen.
-    ///
-    /// the fullscreen windows are accepted and added, but they are treated as tiled or floating window. The given geometry by the window_with_info
-    /// is set as the saved_geometry and geometry attributes of the FloatingWindow structure.
-    /// 
-    /// if the given window has an attribute FloatOrTile::Tile then the geometries for tiled windows should be updated.
-    ///
-    /// returns an ManagedWindow error if the given window_with_info is already managed by the window manager.
+	// By default, add_window still focuses the new added window, no matter whether it is tiled or floating
 	fn add_window(&mut self, window_with_info: WindowWithInfo) -> Result<(), Self::Error> {
 		if !self.is_managed(window_with_info.window) {
 			//All new added windows are set to minimised = false by default
@@ -296,18 +272,37 @@ impl WindowManager for FloatingWM {
 			let temp = self.windows.len() - 1;
 			self.index_foused_window = Some(temp);
 			if window_with_info.float_or_tile == FloatOrTile::Tile{
-				self.update_geometries();
+				self.calculate_tiled_geometries();
 			}
 			Ok(())
 		}else{
 			Err(FloatingWMError::ManagedWindow(window_with_info.window))
 		}
 	}
+/*
+	fn remove_window(&mut self, window: Window) -> Result<(), Self::Error> {
+		match self.windows.iter().position(|w| (*w).window == window) {
+			None => Err(FloatingWMError::UnknownWindow(window)),
+			Some(i) => { 
+				self.windows.remove(i);
+				match self.index_foused_window {
+					None => Ok(()),
 
-	/// removes the given window form the window manager.
-    ///
-	/// Every time that a element is remove the index_foused_window should be updated if it is necessary. 
-    /// Important to noticy here is that when the focused element is the same as the removed element, no focused window is set.
+					Some(index) => {
+						if index == i {
+							self.index_foused_window = None;
+							Ok(())
+						}else{
+							let temp = index - 1;
+							self.index_foused_window = Some(temp);
+							Ok(())
+						}
+					}
+				}                
+			}
+		}
+	}
+*/
 	fn remove_window(&mut self, window: Window) -> Result<(), Self::Error> {
 		match self.windows.iter().position(|w| (*w).window == window) {
 			None => Err(FloatingWMError::UnknownWindow(window)),
@@ -316,7 +311,7 @@ impl WindowManager for FloatingWM {
 				self.windows.remove(i);
 
 				if temp_window.float_or_tile == FloatOrTile::Tile{
-					self.update_geometries();
+					self.calculate_tiled_geometries();
 				};
 				match self.index_foused_window {
 					None => Ok(()),
@@ -344,16 +339,12 @@ impl WindowManager for FloatingWM {
 		}
 	}
 
-
-
-
-	/// returns the layout of all managed windows.
-	///
-	/// I opt to filter the vec of the FloatingWM structure. First I filter the tiled windows, and added them to a temporal vec.
-	/// Then I get the windows with the attribute FloatOrTile::Float and add them to the temporal vec. 
-	/// I keep the order of the curretn *windows* vec, no matter if they are tiled or floating, this becomes pretty handy
-	/// because then the geometry of each individual window is dynamically adapted according with the type and it is returned to
-	/// the same position (in the tiled set) where the window was left out. So if window x is the master and the toggle_floating 
+	/// I opt to filter the vec of the FloatingWM structure. First I filter the tiled windows, they are processed exactly like 
+	/// in b_tilling_wm and attache them to the temporal vec. Then I get the windows with the attribute FloatOrTile::Float, I 
+	/// obtain the Geometries (which are already saved in the vector) and add them to the temporal vec. 
+	/// I keep the order in which the windows were added, no matter if they are tiled or floating, this becomes pretty handy
+	/// because then the geometry of each individual window is dynamically adapted according with the type and it is return to
+	// te same position (in the tiled set) where the window was left out. So if window x is the master and the toggle_floating 
 	/// is used twice continuosly, x should be remaind as master window in the tiled layout, no matter the numbers of windows
 	/// the window manager is handling.
 
@@ -387,7 +378,102 @@ impl WindowManager for FloatingWM {
 		} 
 	}
 
-	/// set the focused window in the window manager with the given window.
+	/*
+	fn get_window_layout(&self) -> WindowLayout {
+
+		if !self.windows.is_empty(){
+
+			if self.windows.len() > 1 {
+				//Divisor now should be update to just the tiled windows
+				let divisor = (self.windows.len() - self.get_floating_windows().len() - 1) as u32;
+
+				let height_side = self.screen.height / divisor;
+				let width_side = self.screen.width / 2;
+				let x_point = (self.screen.width / 2) as i32;
+				// It is already tested that there is more than 1 window, hence one can use unwrap method being sure that a 
+				// Some intance of option will be returned
+				let master_window = self.get_master_window().unwrap();
+
+				let mut temp_windows = Vec::new();
+				let mut y_point = 0 as i32;
+
+				for window_with_info in self.windows.iter().filter(|x| (*x).float_or_tile == FloatOrTile::Tile){
+					if master_window != window_with_info.window {
+						// I calculate the values of the secondary windows (right windows)
+						let rigth_geometry = Geometry {
+							x: x_point,
+							y: y_point,
+							width: width_side,
+							height: height_side,
+						};
+
+						temp_windows.push((window_with_info.window.clone(), rigth_geometry));
+
+						y_point += (height_side) as i32;
+
+					}else{
+						// I calculate the values for master window
+						let  master_geometry = Geometry { 
+							x: 0,
+							y: 0,
+							width: width_side,
+							height: self.screen.height,
+						};
+
+						temp_windows.push((window_with_info.window.clone(), master_geometry));
+					}
+				};
+
+				for window_with_info_floating in self.windows.iter().filter(|x| (*x).float_or_tile == FloatOrTile::Float){
+					temp_windows.push((window_with_info_floating.window.clone(), window_with_info_floating.geometry.clone()))
+				};
+
+				//once again the unwrap is used because it is centrain that there are windows, the None mathc of the index_foused_window
+				// prevents whenever there is no focused window
+				let temp_focused_window = 
+				match self.index_foused_window {
+					None => None,
+					Some(index) => Some(self.windows.get(index).unwrap().window),
+				};	
+
+				WindowLayout {
+					focused_window: temp_focused_window,
+					windows: temp_windows,
+				}
+
+			}else{
+
+				let temp_focused_window = 
+				match self.index_foused_window {
+					None => None,
+					Some(index) => Some(self.windows.get(index).unwrap().window),
+				};
+
+				// the geometry is taken depending whether the window is set to tiled or floating
+				match self.windows.get(0).unwrap().float_or_tile {
+					FloatOrTile::Tile =>{
+						let fullscreen_geometry = self.screen.to_geometry();
+
+						WindowLayout {
+							focused_window: temp_focused_window,
+							windows: vec![(self.windows.get(0).unwrap().window, fullscreen_geometry)],
+						}
+
+					},
+
+					FloatOrTile::Float =>{
+						WindowLayout {
+							focused_window: temp_focused_window,
+							windows: vec![(self.windows.get(0).unwrap().window, self.windows.get(0).unwrap().geometry)],
+						}
+					}
+				}
+			}	        
+		}else {
+			WindowLayout::new()
+		} 
+	}*/
+
 	fn focus_window(&mut self, window: Option<Window>) -> Result<(), Self::Error> {
 		match window{
 			None => {
@@ -408,10 +494,10 @@ impl WindowManager for FloatingWM {
 		}
 	}
 
-	/// back/forth to the next window from the current focused window.
-    ///
-    /// the iteration in this function is over the current order of the *windows* vec, that means that the client can jump over floating and tiled
-    /// windows if the order of *windows* vec is in such way.
+	// I'm assuming that cycle_focus applies for both tiled and floating windows
+	// I implemetned the navie way, so the cycle is done throug the windows in the order
+	// they were added, so I transverse the vector, this is becasue I create the actually layout
+	// on fly, whenever the get_window_layout function is called.
 	fn cycle_focus(&mut self, dir: PrevOrNext) {
 		if self.windows.len() > 1 {
 			match self.index_foused_window{
@@ -449,9 +535,6 @@ impl WindowManager for FloatingWM {
 		}
 	}
 
-	/// gets the complete current information of the given window.
-    ///
-    /// If the given window is not managed by the window manager, UnknownWindow error is shown.
 	fn get_window_info(&self, window: Window) -> Result<WindowWithInfo, Self::Error> {
 		match self.windows.iter().position(|w| (*w).window == window) {
 			None => Err(FloatingWMError::UnknownWindow(window)),
@@ -468,33 +551,26 @@ impl WindowManager for FloatingWM {
 		}
 	}
 
-	/// gets the current window screen size.
 	fn get_screen(&self) -> Screen {
 		self.screen
 	}
 
-	/// set the given screen as new screen size.
-    ///
-    /// The geometries should be updated accordingly with the new given screen.
-    fn resize_screen(&mut self, screen: Screen) {
-        self.screen = screen;
-        self.update_geometries()
-    }
+	fn resize_screen(&mut self, screen: Screen) {
+		self.screen = screen
+	}
 
 }
 
-
+// This methods where update to only be applied to tiled windows, a no tiled window is given a 
+// NoTiledWindow error is thrown
 impl TilingSupport for FloatingWM {
 
-	/// if *windows* is not empty it returns the master window, otherwise return None.
-    ///
-    /// In this window manager the first tiled element of the *windows* vec is always the master window.
 	fn get_master_window(&self) -> Option<Window>{
 
 		if !self.windows.is_empty(){
 			//Now we have to look over the vec and select the first tiled window
 			match self.windows.iter().position(|w| (*w).float_or_tile == FloatOrTile::Tile) {  
-				//it could be the case that no tiled window exist
+				//now it could be the case that no tiled window exist
 				None => None,
 				Some(index) => Some(self.windows.get(index).unwrap().window)
 			}
@@ -503,43 +579,27 @@ impl TilingSupport for FloatingWM {
 		}
 	}
 
-	/// swap the position of the given window with the master window.
-    ///
-    /// This functions actually affects the order in which the windows were added, also the geomtries should be accordingly.
-    ///
-    /// In case the given window is the master window  and the window master is not focused, the only effect of this funtions is 
-    /// changing the focused windows to the master window.
-    ///
-    /// If the given window is not a floating window, NoTiledWindow error is thrown
 	fn swap_with_master(&mut self, window: Window) -> Result<(), Self::Error>{
 		match self.windows.iter().position(|w| (*w).window == window) {
 			None => Err(FloatingWMError::UnknownWindow(window)),
 			Some(window_index) => {
-				if self.windows.get(window_index).unwrap().float_or_tile == FloatOrTile::Tile{
-					match self.get_master_index(){
-						None => Ok(()),
-						Some(master_index) => {
-							self.windows.swap(master_index, window_index);
-							self.update_geometries();
-							self.focus_window(Some(window))
-						}
+				match self.get_master_index(){
+					None => Ok(()),
+					Some(master_index) => {
+						self.windows.swap(master_index, window_index);
+						self.calculate_tiled_geometries();
+						self.focus_window(Some(window))
 					}
-				}else{
-					Err(FloatingWMError::NoTiledWindow(window))
 				}
 			}
 		}
 	}
 
 
-	/// Simlar approach than cycle_focus, but now the Vec is affect, hence the order in which the windows were added is changed.
-    ///
-    /// If there is no focused window or if the number of tiled windows is less than 2 the funtion has no effects.
-    ///
-    /// After the sucessful swap, the geometries should be updated accordingly.
+	// Simlar approach than cycle_focus, but now the structure should be updated accordingly, that behavior can be done
+	// with the swap built-in method 
 	fn swap_windows(&mut self, dir: PrevOrNext){
-		let tiled_windows = self.windows.len() - self.get_floating_windows().len();
-		if tiled_windows > 1 {
+		if self.windows.len() > 1 {
 			match self.index_foused_window {
 				// no focused window = nothing
 				None => (),
@@ -552,7 +612,7 @@ impl TilingSupport for FloatingWM {
 									Some(prev_index) => {
 										self.index_foused_window = Some(prev_index);
 										self.windows.swap(index, prev_index);
-										self.update_geometries();
+										self.calculate_tiled_geometries();
 									},
 									None => (),
 								}
@@ -563,7 +623,7 @@ impl TilingSupport for FloatingWM {
 									Some(next_index) => {
 										self.index_foused_window = Some(next_index);
 										self.windows.swap(index, next_index);
-										self.update_geometries();
+										self.calculate_tiled_geometries();
 									},
 									None => (),
 								}
@@ -580,9 +640,9 @@ impl TilingSupport for FloatingWM {
 
 impl FloatSupport for FloatingWM {
 
-	/// return a vector that contains the floating windows managed by this window manager
-	///
-	/// I have to iterate over the whole collection to filter out the non-floating windows.
+	// this is probably a pitfall of having both tiled and floating windows in one vector, now we have to iterate over the whole 
+	// collection filter out the non-floating windows and return it. Because the vec keeps the entire windows_with_info structure, 
+	// we to extract the window form it anyway.
 	fn get_floating_windows(&self) -> Vec<Window>{
 		let mut temp_windows = Vec::new();
 
@@ -593,9 +653,32 @@ impl FloatSupport for FloatingWM {
 		temp_windows
 	}
 
-	/// set the given window to a floating window if it was a tiled window or viceversa
-	///
-	/// after the a sucessful toogle, the geometries of the tiled windows should be updated
+
+	// This method is specially because can be applied to both tiled and floating windows
+	// so the approach is iterate ove thewhole windows, get the correcponding window and
+	// mutate the element, in this case the FloatOrTile  window_with_info structure of the given
+	// window
+	/*
+	fn toggle_floating(&mut self, window: Window) -> Result<(), Self::Error>{
+		match self.windows.iter().position(|w| (*w).window == window) {
+			None => Err(FloatingWMError::UnknownWindow(window)),
+
+			Some(i) => {
+
+				if let Some(win) = self.windows.get_mut(i) {
+					if win.float_or_tile == FloatOrTile::Tile{
+						(*win).float_or_tile = FloatOrTile::Float;	
+					}else{
+						(*win).float_or_tile = FloatOrTile::Tile;	
+					}
+
+				};
+				self.calculate_tiled_geometries();
+				Ok(())
+			}
+		}
+	}
+*/
 	fn toggle_floating(&mut self, window: Window) -> Result<(), Self::Error>{
 		match self.windows.iter().position(|w| (*w).window == window) {
 			None => Err(FloatingWMError::UnknownWindow(window)),
@@ -611,16 +694,16 @@ impl FloatSupport for FloatingWM {
 					}
 
 				};
-				self.update_geometries();
+				self.calculate_tiled_geometries();
 				Ok(())
 			}
 		}
 	}
 
-	/// set the given window to a floating window if it was a tiled window or viceversa
-	///
-	/// this function iterates over the windows until the given window is found, then if it is a floating window
-	/// the corresponding FloatingWindow structure is mutated, otherwise a NoFloatingWindow error is thrown.
+	/// The approach is iterate over the windows until I found the given window, the if it is a floating window
+	/// the corresponding window_with_info structure is mutated, otherwise a NoFloatingWindow error is thrown.
+	/// Once again the trade off of have two vectors for each window type, now if have to iterate over the whole vec
+	/// but at least the location of every window is saved with no extra structure
 	fn set_window_geometry(&mut self, window: Window, new_geometry: Geometry)-> Result<(), Self::Error>
 	{
 		match self.windows.iter().position(|w| (*w).window == window) {

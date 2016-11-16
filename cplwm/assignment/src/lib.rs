@@ -73,9 +73,7 @@ extern crate rustc_serialize;
 pub mod a_fullscreen_wm;
 pub mod b_tiling_wm;
 pub mod c_floating_windows;
-//pub mod c_floating_windows_2;
 pub mod d_minimising_windows;
-
 // Optional assignments
 pub mod e_fullscreen_windows;
 // pub mod f_gaps;
