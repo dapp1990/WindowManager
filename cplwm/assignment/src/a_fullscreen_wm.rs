@@ -26,9 +26,8 @@
 //!
 //! ## General approach
 //!
-//! There is no need to actually keep track the focused window, the describetion states that the last element of the vec is focused 
-//! by default, the only possible way to have a None focused window is when there is no windows, and that behaviour is already handled by
-//! the WindowLayout constructor.
+//! To keep track of the focused element I add a bool attribute to the structure, in that way I can
+//! "hide" the windows whenever the focus_window is set with None
 //!
 //! It is convenient to store the complete WindowWithInfo instead of the Window, so the given functions implementations where updated to
 //! the structure.
@@ -56,6 +55,8 @@ pub struct FullscreenWM {
     pub windows: VecDeque<WindowWithInfo>,
     /// The size of the screen
     pub screen: Screen,
+    /// Variable that decides whether the windows should be hidden or not
+    pub focused: bool,
 }
 
 
@@ -109,6 +110,7 @@ impl WindowManager for FullscreenWM {
         FullscreenWM {
             windows: VecDeque::new(),
             screen: screen,
+            focused: true,
         }
     }
 
@@ -127,9 +129,9 @@ impl WindowManager for FullscreenWM {
 
     /// gets the current focused window
     ///
-    /// If list is not empty I get the last element focused window, otherwise it is returned None
+    /// If list is not empty and focused=true I get the last element focused window, otherwise it is returned None
     fn get_focused_window(&self) -> Option<Window> {
-        if !self.windows.is_empty(){ 
+        if !self.windows.is_empty() || !self.focused{ 
         	// I use unwrap() because the if test ensure that *windows* has
         	// *window*s
         	if self.windows.len() > 1{ 
@@ -156,6 +158,7 @@ impl WindowManager for FullscreenWM {
                 float_or_tile: window_with_info.float_or_tile, 
                 fullscreen: window_with_info.fullscreen,};
             //	self.windows.push(window_with_info.window);
+            self.focused = true;
             Ok(self.windows.push_back(fullscreen_window))
         }else {
             Err(FullscreenWMError::ManagedWindow(window_with_info.window))
@@ -163,19 +166,24 @@ impl WindowManager for FullscreenWM {
     }
 
     /// removes the given window form the window manager
+    /// 
+    /// it set a no focused window
     fn remove_window(&mut self, window: Window) -> Result<(), Self::Error> {
        	match self.windows.iter().position(|w| (*w).window == window) {
             None => Err(FullscreenWMError::UnknownWindow(window)),
             Some(i) => {
                 self.windows.remove(i);
+                self.focused = false;
                 Ok(())
             }
         }
     }
 
     /// returns the layout of the visible windows, in this case the focused window
+    ///
+    /// if there is an empty vec or the focused = false (hidden windows) it is return an new WindowLayout
     fn get_window_layout(&self) -> WindowLayout {
-        if !self.windows.is_empty(){
+        if !self.windows.is_empty() || !self.focused{
 	        let last_index = self.windows.len() - 1;
             // I used unwrap because it is already tested that there is at least one element in Vec
             let window_with_info = self.windows.get(last_index).unwrap();
@@ -196,8 +204,8 @@ impl WindowManager for FullscreenWM {
     fn focus_window(&mut self, window: Option<Window>) -> Result<(), Self::Error> {
     	// First I check if the given *window* is either a window or a None
     	match window{
-    		// If None, nothing happens
-    		None => Ok(()),
+    		// If None, focused = false
+    		None => Ok(self.focused = false),
     		// If Some, focus operation starts
     		Some(gw) => {
 
@@ -233,6 +241,8 @@ impl WindowManager for FullscreenWM {
         // if statement. Focus *window* by definition is always the last element, no
         // need to test whether there is a focus *window* when *windows* is a 
         // singleton, the only *window* is always focus.
+        // cycle_focuse allow to focused_window an element if previously was not focused window
+        self.focused = true;
         if self.windows.len() > 1{
         	match dir {
         		// I use unwrap() because we already test that *windows* is not empty
@@ -277,7 +287,7 @@ impl WindowManager for FullscreenWM {
 }
 
 
-/*
+
 #[cfg(test)]
 mod tests {
 
@@ -524,4 +534,4 @@ mod tests {
         wm.resize_screen(SCREEN2);
         assert_eq!(wm.get_screen(), SCREEN2);
     }
-}*/
+}

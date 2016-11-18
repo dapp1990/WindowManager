@@ -18,7 +18,7 @@
 //! or you want to explain your approach, write it down after the comments
 //! section.
 //!
-//! COMPLETED: ?
+//! COMPLETED: No
 //!
 //! COMMENTS:
 //!

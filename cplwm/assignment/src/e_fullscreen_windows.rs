@@ -22,12 +22,29 @@
 //! or you want to explain your approach, write it down after the comments
 //! section.
 //!
-//! COMPLETED: ?
+//! COMPLETED: YES
 //!
 //! COMMENTS:
 //!
-//! ...
+//! ## General approach
+//! I take advabtage of the boolean attribute already stored in the MinisedWindow structure use in the last excersice, the major change now are
+//! in *get_window_layout* where now it should hide the the windows and show just the fullscreen one if there is one. I updated the name of the structure to
+//! make it consistent with the name of the window manager
+//! Fucntions *add_window*, *focus_window*, *swap_with_master*, *swap_windows*, *toggle_minimised* and *toggle_floating*, *remove_window*, *resize_screen* and *toggle_fullscreen* affect the state 
+//! of the fullscreen. 
+//! 
+//! The *add_window*, *focus_window*, *swap_with_master*, *swap_windows* funtions involve to change the focused window, the focused window is always the fullscreen if there is one. Hence one has to "remove"
+//! the fullscreen window in order to navigate to the new focused element. The fullscreen is setting back to the previous window type (tiled or floating).
+//! 
+//! Funtions *toggle_minimised*, *toggle_floating*, *remove_window* affect the fullscreen window only if it is applied to the fullscreen window itself. If other 
+//! non-fullscreen window is used, then it is done in a second plane and it will only visible (unhide) by *get_window_layout* when the fullscreen is disable or when you call *get_window_info* funtion.
 //!
+//! Funtion *resize_screen* only affects the fullscreen in terms of geometry, since the screen is updated the fullscreen screen should be updated as well as the other tiled windows.
+//!
+//! All get funtions do not affect fullscreen since they are only retriving information of the current state of the window manager.
+//!
+//! I see *set_window_geometry* funtion as a speacial case, it can be applied to a floating windows and they will be updated in a second plane,
+//! but if it is applied to the fullscren window a NoFloatingWindow error is thrown, instead.
 
 // Add imports here
 use std::error;
@@ -43,13 +60,9 @@ use cplwm_api::wm::FullscreenSupport;
 /// **TODO**: Documentation
 pub type WMName = FullscreenWM;
 
-/// The FullscreenWM struct
-///
-/// # Example Representation
-/// Now FullscreenWM contains an extra attribute to keep track the order of the minimised windows
-/// 
+/// The FullscreenWindow struct
 #[derive(RustcDecodable, RustcEncodable, Debug, Clone)]
-pub struct MinimisedWindow {
+pub struct FullscreenWindow {
 	/// The window.
     pub window: Window,
     /// The geometry of the window.
@@ -68,10 +81,10 @@ pub struct MinimisedWindow {
 /// TODO: *documentation*
 pub struct FullscreenWM {
 	/// Vector where the elementes are minimised windows
-	pub windows: Vec<MinimisedWindow>,  
+	pub windows: Vec<FullscreenWindow>,  
 	/// Vector that stores the order in which the windows were minimised
 	pub minimised_windows: Vec<Window>,
-	/// **TODO**: Documentation
+	/// The size of the screen.
 	pub screen: Screen,
 	/// The index of the focused window in the collection, if there is no focused window a None is placed
 	pub index_foused_window: Option<usize>,
@@ -92,7 +105,7 @@ impl FullscreenWM {
 			match self.windows.get(next_index){
 				None => None,
 				Some(window) => {
-					if window.float_or_tile == FloatOrTile::Tile && !window.minimised{
+					if window.float_or_tile == FloatOrTile::Tile{
 						Some(next_index)
 					}else{
 						self.get_next_tile_index(next_index,saved)
@@ -114,7 +127,7 @@ impl FullscreenWM {
 			match self.windows.get(prev_index){
 				None => None,
 				Some(window) => {
-					if window.float_or_tile == FloatOrTile::Tile && !window.minimised{
+					if window.float_or_tile == FloatOrTile::Tile{
 						Some(prev_index)
 					}else{
 						self.get_prev_tile_index(prev_index,saved)
@@ -124,30 +137,34 @@ impl FullscreenWM {
 		}
 	}
 
+	/// get the master window index
+	///
 	/// The method was upgraded to skip not only floating but also minimised windows
 	fn get_master_index(&self) -> Option<usize>{
 		if !self.windows.is_empty(){
-			self.windows.iter().position(|w| (*w).float_or_tile == FloatOrTile::Tile)
+			self.windows.iter().position(|w| (*w).float_or_tile == FloatOrTile::Tile && !(*w).minimised)
 		}else{
 			None			
 		}
 	}
 
-	/// *TODO*
-	fn get_minimised_tiled_windows(&self) -> Vec<Window>{
-		let mut temp_windows = Vec::new();
-		for minimised_window in self.windows.iter().filter(|x| (*x).float_or_tile == FloatOrTile::Tile && (*x).minimised){
-			temp_windows.push(minimised_window.window.clone())
-		};
-		temp_windows
+	///	returns the index where the first floating window starts
+	///
+	/// if there is no  floating window, a None element is returns
+	fn get_partion_index(&self) -> Option<usize> {
+		if !self.windows.is_empty() {
+			self.windows.iter().position(|w| (*w).float_or_tile == FloatOrTile::Float)
+		}else{
+			None			
+		}
 	}
 
-	/// This method calculated the tiled window's geometries in the order of the
-	/// windows vector
-	//*** Improvement: here you calculate first thar windows is greater than 1, but could be thecase
-	// and not necessary it is a tiled window 
-	fn calculate_tiled_geometries(&mut self){
+	/// This method calculated the geometries of windows.
+	///
+	/// if there is a fullscreen it is updated wiht the screen geometry
+	fn update_geometries(&mut self){
 		if !self.windows.is_empty(){
+
 
 				let mut fullscreen = 0;
 
@@ -157,7 +174,7 @@ impl FullscreenWM {
 				};
 
 				//Divisor now should be update to just the tiled windows
-				let non_tiled_windows = self.get_floating_windows().len() + self.get_minimised_tiled_windows().len() + 1 + fullscreen;
+				let non_tiled_windows = self.get_floating_windows().len() + self.get_minimised_tiled_windows().len() + self.get_minimised_floating_windows().len() + 1 + fullscreen;
 				let total_windows = self.windows.len();
 				//let divisor = self.windows.len() - non_tiled_windows;
 
@@ -175,8 +192,8 @@ impl FullscreenWM {
 
 					let mut y_point = 0 as i32;
 
-					for minimised_window in self.windows.iter_mut().filter(|x| (*x).float_or_tile == FloatOrTile::Tile && !(*x).minimised && !(*x).fullscreen){
-						if master_window != minimised_window.window {
+					for fullscreen_window in self.windows.iter_mut().filter(|x| (*x).float_or_tile == FloatOrTile::Tile && !(*x).minimised && !(*x).fullscreen){
+						if master_window != fullscreen_window.window {
 							// I calculate the values of the secondary windows (right windows)
 							let rigth_geometry = Geometry {
 								x: x_point,
@@ -184,7 +201,7 @@ impl FullscreenWM {
 								width: width_side,
 								height: height_side,
 							};
-							minimised_window.geometry = rigth_geometry;
+							fullscreen_window.geometry = rigth_geometry;
 							y_point += (height_side) as i32;
 
 						}else{
@@ -196,11 +213,11 @@ impl FullscreenWM {
 								height: self.screen.height,
 							};
 
-							minimised_window.geometry = master_geometry;
+							fullscreen_window.geometry = master_geometry;
 						}
 					};
 				}else{
-					// It could be the posibility that there is just one windwo (the master window)
+					// It could be the posibility that there is just one window (the master window)
 					match self.get_master_index(){
 						None => (),
 						Some(i) => {
@@ -212,45 +229,77 @@ impl FullscreenWM {
 		};
 	}
 
-	/// Removes a minimised window from the minimised vector
+	/// gets a vector with windows that are both minised and tiled windows
+	fn get_minimised_tiled_windows(&self) -> Vec<Window>{
+		let mut temp_windows = Vec::new();
+		for fullscreen_window in self.windows.iter().filter(|x| (*x).float_or_tile == FloatOrTile::Tile && (*x).minimised){
+			temp_windows.push(fullscreen_window.window.clone())
+		};
+		temp_windows
+	}
 
-	/**** Improvement: you should handle in a better way the None/error ****/
+	/// gets a vector with windows that are both minised and floating windows
+	fn get_minimised_floating_windows(&self) -> Vec<Window>{
+		let mut temp_windows = Vec::new();
+		for minimised_window in self.windows.iter().filter(|x| (*x).float_or_tile == FloatOrTile::Float && (*x).minimised){
+			temp_windows.push(minimised_window.window.clone())
+		};
+		temp_windows
+	}
+	
+	/// Removes the given window from the *minimised_windows* vector and set its attribute to false in the corresponding
+	// window of *windows* vector
 	fn remove_minimised_window(&mut self, window:Window){
 		match self.minimised_windows.iter().position(|w| *w == window) {
 			None => (),
 			Some(i) => {
 				self.minimised_windows.remove(i); 
-				self.windows.get_mut(i).unwrap().minimised = false;
+				match self.windows.iter().position(|w| (*w).window == window){
+					None => (),
+					Some(i_2) => {self.windows.get_mut(i_2).unwrap().minimised = false;}
+				}
 			}
 		}
 	}
 
-	/// *TODO*: documentation
-	fn remove_fullscreen_window(&mut self){
-    	for f_w in self.windows.iter_mut().filter(|x| (*x).fullscreen){
-			f_w.fullscreen = false
+	/// set the given window to the *minimised_windows* vector and set its attribute to true in the corresponding
+	// window of *windows* vector
+	fn set_minimised_window(&mut self, window:Window){
+		match self.windows.iter().position(|w| (*w).window == window) {
+			None => (),
+			Some(i) => {
+				let window_min = self.windows.get_mut(i).unwrap();
+				window_min.minimised = true;
+				self.minimised_windows.push(window_min.window.clone()); 
+			}
 		}
-    }
-
-    /// *TODO*: documentation
+	}
+    /// Set the fullscreen attribute of the given window to true
 	fn set_fullscreen_window(&mut self, window:Window){
     	for f_w in self.windows.iter_mut().filter(|x| (*x).window == window){
 			f_w.fullscreen = true
 		}
     }
 
+    /// Set the fullscreen attribute of the given window to false
+	fn remove_fullscreen_window(&mut self, window:Window){
+    	for f_w in self.windows.iter_mut().filter(|x| (*x).window == window){
+			f_w.fullscreen = false
+		}
+    }
+
 }
 
-/// **TODO**: Documentation
+/// The errors that this window manager can return.
 #[derive(Debug)]
 pub enum FullscreenWMError {
-	/// **TODO**: Documentation
+	/// This window is not known by the window manager.
 	UnknownWindow(Window),
-	/// **TODO**: Documentation
+	/// This window is not known by the window manager.
 	ManagedWindow(Window),
-	/// **TODO**: Documentation
+	/// This window is not a floating window.
 	NoFloatingWindow(Window),
-	/// **TODO**: Documentation
+	/// This window is not a tiled window
 	NoTiledWindow(Window),
 }
 
@@ -281,7 +330,9 @@ impl WindowManager for FullscreenWM {
 
 	type Error = FullscreenWMError;
 
-	// Upgrade to support the new minimised_windows vector
+	/// The FullscreenWM constructor.
+    ///
+    /// windows and minimised_windows are initialised as empty vec, screen as the given screen and focused index as None.
 	fn new(screen: Screen) -> FullscreenWM {
 		FullscreenWM {
 			windows: Vec::new(),
@@ -291,6 +342,7 @@ impl WindowManager for FullscreenWM {
 		}
 	}
 
+	/// Returns all the managed windows in the window manager.
 	fn get_windows(&self) -> Vec<Window> {
 		let mut temp_windows = Vec::new();
 		for window_with_info in self.windows.iter() {
@@ -299,7 +351,9 @@ impl WindowManager for FullscreenWM {
 		temp_windows
 	}
 
-	// get focused work for floating, tiled, minimised and fullscreen windows
+	/// gets the current focused window.
+    ///
+    /// The list can be no empty and no focused window simultaneously.
 	fn get_focused_window(&self) -> Option<Window> {
 		if !self.windows.is_empty(){ 
 			match self.index_foused_window {
@@ -311,16 +365,27 @@ impl WindowManager for FullscreenWM {
 		}
 	}
 
-	// now add_window converts every window_with_info to minimised_window, settin the minimised
-	// attribute as false
-	// it was already supported to add the attribute fullscreen, however when a new window is added
-	// and there is a fullscreen, such fullscreen should be put it in previous type window
-	// (by default is to tiled)
+	/// adds new window_with_info to the vec windows and set the geometry to fullscreen.
+    ///
+    /// the fullscreen windows are accepted and added, but they are treated as tiled or floating window. The given geometry by the window_with_info
+    /// is set as the saved_geometry and geometry attributes of the FloatingWindow structure.
+    /// 
+    /// if the given window has an attribute FloatOrTile::Tile then the geometries for tiled windows should be updated.
+    ///
+    /// add_window adds the tiled and floating windows in order, so the first part of the vec contains
+    /// the tiled windows while the second part are the floating windows
+    ///
+    /// add_window converts every window_with_info to fullscreen_window, setting the minimised
+	/// attribute as false
+    ///
+    /// returns an ManagedWindow error if the given window_with_info is already managed by the window manager.
 	fn add_window(&mut self, window_with_info: WindowWithInfo) -> Result<(), Self::Error> {
 		if !self.is_managed(window_with_info.window) {
-			self.remove_fullscreen_window();
-			//All new added windows are set to minimised = false by default
-			let minimised_window = MinimisedWindow {
+			for f_w in self.windows.iter_mut().filter(|x| (*x).fullscreen){
+			 f_w.fullscreen = false;
+			};
+			//All new added windows are set minimised = false by default
+			let fullscreen_window = FullscreenWindow {
 				window: window_with_info.window, 
 				geometry: window_with_info.geometry, 
 				saved_geometry: window_with_info.geometry, 
@@ -328,20 +393,40 @@ impl WindowManager for FullscreenWM {
 				fullscreen: window_with_info.fullscreen, 
 				minimised: false,
 			};
-			self.windows.push(minimised_window);
-			let temp = self.windows.len() - 1;
-			self.index_foused_window = Some(temp);
-
-			self.calculate_tiled_geometries();
+			if window_with_info.float_or_tile == FloatOrTile::Float{
+				// if there is a floating window, it is insert at the end of the vec
+				self.windows.push(fullscreen_window);
+				let temp = self.windows.len() - 1;
+				self.index_foused_window = Some(temp);
+			}else{
+				// if not, I get the index where the first floating window start and
+				// inser the tiled window there, also the geometries should be updated.
+				match self.get_partion_index(){
+					None => {
+						self.windows.push(fullscreen_window);
+						let temp = self.windows.len() - 1;
+						self.index_foused_window = Some(temp);
+					},
+					Some(partion_index) => {
+						self.windows.insert(partion_index,fullscreen_window);
+						self.index_foused_window = Some(partion_index);
+					},
+				};
+				self.update_geometries();
+			};
 			Ok(())
 		}else{
 			Err(FullscreenWMError::ManagedWindow(window_with_info.window))
 		}
 	}
 
-	// method updated to removed the minimised window in the minimised_windows vector if that is the case
-	// no change need it, there is no ffect in the fullscreen window if a window is removed
-	// unless the fullscreen itself is removed
+	//// removes the given window from the window manager.
+    ///
+	/// Every time that a element is remove the index_foused_window should be updated if it is necessary. 
+    /// Important to noticy here is that when the focused element is the same as the removed element, no focused window is set.
+    ///
+    /// There is no ffect in the fullscreen window if a window is removed
+	/// unless the fullscreen itself is removed.
 	fn remove_window(&mut self, window: Window) -> Result<(), Self::Error> {
 		match self.windows.iter().position(|w| (*w).window == window) {
 			None => Err(FullscreenWMError::UnknownWindow(window)),
@@ -350,11 +435,11 @@ impl WindowManager for FullscreenWM {
 				self.windows.remove(i);
 				
 				if temp_window.minimised {
-					self.remove_minimised_window(temp_window.window);
+					self.remove_fullscreen_window(temp_window.window);
 				};
 
 				if temp_window.float_or_tile == FloatOrTile::Tile{
-					self.calculate_tiled_geometries();
+					self.update_geometries();
 				};
 				match self.index_foused_window {
 					None => Ok(()),
@@ -382,14 +467,11 @@ impl WindowManager for FullscreenWM {
 		}
 	}
 
-	/// I opt to filter the vec of the FullscreenWM structure. First I filter the tiled windows, they are processed exactly like 
-	/// in b_tilling_wm and attache them to the temporal vec. Then I get the windows with the attribute FloatOrTile::Float, I 
-	/// obtain the Geometries (which are already saved in the vector) and add them to the temporal vec. 
-	/// I keep the order in which the windows were added, no matter if they are tiled or floating, this becomes pretty handy
-	/// because then the geometry of each individual window is dynamically adapted according with the type and it is return to
-	// te same position (in the tiled set) where the window was left out. So if window x is the master and the toggle_floating 
-	/// is used twice continuosly, x should be remaind as master window in the tiled layout, no matter the numbers of windows
-	/// the window manager is handling.
+	/// returns the layout of all managed windows.
+	///
+	/// The array is already order so, no need to rearrange the vector.
+	/// The minised windows are filtered out.
+	///
 	/// Now get_window_layout hides the windows when there is a fullscreen window 
 	fn get_window_layout(&self) -> WindowLayout {
 
@@ -412,24 +494,41 @@ impl WindowManager for FullscreenWM {
 			    None => {
 			    	let mut temp_windows = Vec::new();
 
-					for tiled_window in self.windows.iter().filter(|x| (*x).float_or_tile == FloatOrTile::Tile && (*x).minimised == false){
-						temp_windows.push((tiled_window.window.clone(), tiled_window.geometry.clone()))
-					};
+			for window_info in self.windows.iter().filter(|x| !(*x).minimised){
+				temp_windows.push((window_info.window.clone(), window_info.geometry.clone()))
+			};
 
-					for floating_window in self.windows.iter().filter(|x| (*x).float_or_tile == FloatOrTile::Float && (*x).minimised == false){
-						temp_windows.push((floating_window.window.clone(), floating_window.geometry.clone()))
-					};
+			let temp_focused_window = 
+			match self.index_foused_window {
+				None => None,
+				Some(index) => {
+					let window_type = self.windows.get(index).unwrap();
+					match self.get_partion_index(){
+						None => Some(self.windows.get(index).unwrap().window),
+						// if a focused window is a floating one, then the temp_windows is reorder to
+						// put the focused window at the very end of the vec
+						Some(partion_index) => {
+							if partion_index >= index && window_type.float_or_tile == FloatOrTile::Float{
+								match temp_windows.iter().position(|w| (*w) == (window_type.window,window_type.geometry)) {
+										None => (),
 
-					let temp_focused_window = 
-					match self.index_foused_window {
-						None => None,
-						Some(index) => Some(self.windows.get(index).unwrap().window),
-					};
-
-					WindowLayout {
-						focused_window: temp_focused_window,
-						windows: temp_windows,
+										Some(real_index) => {
+											let (temp_window,temp_geometry) = temp_windows.get(real_index).unwrap().clone();
+											temp_windows.remove(real_index);
+											temp_windows.push((temp_window,temp_geometry));
+										},
+									};
+							};
+							Some(self.windows.get(index).unwrap().window)
+						},
 					}
+				},
+			};
+
+			WindowLayout {
+				focused_window: temp_focused_window,
+				windows: temp_windows,
+			}
 				},
 			}       
 		}else {
@@ -437,8 +536,11 @@ impl WindowManager for FullscreenWM {
 		} 
 	}
 
-	// Focus to the window, if there is a fullscreen window it is return to its previous
-	// state
+	/// set the focused window in the window manager with the given window.
+	///
+	/// if the given window is minised, after focus_window succeeds, such windows is unminimised.
+	///
+	/// One can focused the fullscreen, if that is the case, there is no effect.
 	fn focus_window(&mut self, window: Option<Window>) -> Result<(), Self::Error> {
 		match window{
 			None => {
@@ -451,29 +553,33 @@ impl WindowManager for FullscreenWM {
 					None => Err(FullscreenWMError::UnknownWindow(gw)),
 
 					Some(i) => {
-						let minimised_window = self.windows.get(i).unwrap().clone();
-						self.index_foused_window = Some(i);
-						for fullscreen_window in self.windows.iter_mut().filter(|x| (*x).fullscreen){
-							fullscreen_window.fullscreen = false
-						};
-						if minimised_window.minimised{
-							match self.toggle_minimised(window.unwrap()){
-								_ => ()
-							}
-						};
-						self.calculate_tiled_geometries();
-						Ok(())
+						let fullscreen_window = self.windows.get(i).unwrap().clone();
+
+						if !fullscreen_window.fullscreen {
+							self.index_foused_window = Some(i);
+												for fullscreen_window in self.windows.iter_mut().filter(|x| (*x).fullscreen){
+													fullscreen_window.fullscreen = false
+												};
+												if fullscreen_window.minimised{
+													Ok(self.remove_minimised_window(window.unwrap()))
+												}else{
+													Ok(())
+												}
+						}else{
+							Ok(())
+						}
 					}
 				}
 			}
 		}
 	}
 
-	// I'm assuming that cycle_focus applies for both tiled and floating windows
-	// I implemetned the navie way, so the cycle is done throug the windows in the order
-	// they were added, so I transverse the vector, this is becasue I create the actually layout
-	// on fly, whenever the get_window_layout function is called.
-	// similar behaviour that the focus_window, whenever it is used, the fullscreen is disable
+	/// back/forth to the next window from the current focused window.
+    ///
+    /// the iteration in this function is over the current order of the *windows* vec, that means that the client can jump over floating and tiled
+    /// windows if the order of *windows* vec is in such way.
+    /// If the PrevOrNext is a minised window, it is unminimised.
+	/// Whenever it is used, the fullscreen is disable
 	fn cycle_focus(&mut self, dir: PrevOrNext) {
 		if self.windows.len() > 1 {
 			match self.index_foused_window{
@@ -513,10 +619,9 @@ impl WindowManager for FullscreenWM {
 		match self.index_foused_window {
 		    Some(index) => {
 		    	let minimised_window = self.windows.get(index).unwrap().clone();
-		    	/*** Improvement: do you really don't care about error? ***/
-		    	match self.toggle_minimised(minimised_window.window){
-		    		_ => (),
-		    	}
+		    	// I know that the given minised_window already exists in the manager
+		    	// no need to catch the output
+		    	self.remove_minimised_window(minimised_window.window);
 		    },
 		    None => (),
 		}
@@ -528,28 +633,30 @@ impl WindowManager for FullscreenWM {
 		};
 
 		if fullscreen_window {
-			self.calculate_tiled_geometries()
+			self.update_geometries()
 		}
 	}
 
-	//now get_window_info extrant the correct WindowWithInfo attributes, create a new structure
-	//and return the proper resutls
+	/// gets the complete current information of the given window.
+    ///
+    /// If the given window is not managed by the window manager, UnknownWindow error is shown.
 	fn get_window_info(&self, window: Window) -> Result<WindowWithInfo, Self::Error> {
 		match self.windows.iter().position(|w| (*w).window == window) {
 			None => Err(FullscreenWMError::UnknownWindow(window)),
 			Some(i) => {
-				let minimised_window = self.windows.get(i).unwrap().clone();
+				let fullscreen_window = self.windows.get(i).unwrap().clone();
 				let window_with_info = WindowWithInfo{
-					window: minimised_window.window,
-				    geometry: minimised_window.geometry,
-				    float_or_tile: minimised_window.float_or_tile,
-				    fullscreen: minimised_window.fullscreen,
+					window: fullscreen_window.window,
+				    geometry: fullscreen_window.geometry,
+				    float_or_tile: fullscreen_window.float_or_tile,
+				    fullscreen: fullscreen_window.fullscreen,
 				};
 				Ok(window_with_info)
 			},
 		}
 	}
 
+	/// gets the current window screen size.
 	fn get_screen(&self) -> Screen {
 		self.screen
 	}
@@ -557,29 +664,37 @@ impl WindowManager for FullscreenWM {
 	// When the scren is resized, the tiled windows should be updated accordingly
 	fn resize_screen(&mut self, screen: Screen) {
 		self.screen = screen;
-		self.calculate_tiled_geometries()
+		self.update_geometries()
 	}
 
 }
 
-// This methods where update to only be applied to tiled windows, a no tiled window is given a 
-// NoTiledWindow error is thrown
 impl TilingSupport for FullscreenWM {
 
+	/// if *windows* is not empty it returns the master window, otherwise return None.
+    ///
+    /// In this window manager the first tiled element of the *windows* vec is always the master window.
 	fn get_master_window(&self) -> Option<Window>{
-
 		if !self.windows.is_empty(){
-			//Now we have to look over the vec and select the first tiled window
-			match self.windows.iter().position(|w| (*w).float_or_tile == FloatOrTile::Tile) {  
-				//now it could be the case that no tiled window exist
-				None => None,
-				Some(index) => Some(self.windows.get(index).unwrap().window)
+				match self.get_master_index() {
+					None => None,
+					Some(index) => Some(self.windows.get(index).unwrap().window),
+				}
+			}else{
+				None
 			}
-		}else{
-			None			
-		}
 	}
 
+	/// swap the position of the given window with the master window.
+    ///
+    /// This functions actually affects the order in which the windows were added, also the geomtries should be accordingly.
+    ///
+    /// In case the given window is the master window  and the window master is not focused, the only effect of this funtions is 
+    /// changing the focused windows to the master window.
+    ///
+    /// If the given window is minised, this funtion should unminimised it
+    ///
+    /// If the the fullscreen is removed, if any.
 	fn swap_with_master(&mut self, window: Window) -> Result<(), Self::Error>{
 		for f_w in self.windows.iter_mut().filter(|x| (*x).fullscreen){
 			f_w.fullscreen = false;
@@ -587,23 +702,38 @@ impl TilingSupport for FullscreenWM {
 		match self.windows.iter().position(|w| (*w).window == window) {
 			None => Err(FullscreenWMError::UnknownWindow(window)),
 			Some(window_index) => {
-				match self.get_master_index(){
-					None => Ok(()),
-					Some(master_index) => {
-						self.windows.swap(master_index, window_index);
-						self.calculate_tiled_geometries();
-						self.focus_window(Some(window))
+				let minised_window = self.windows.get(window_index).unwrap().clone();
+				if minised_window.float_or_tile == FloatOrTile::Tile{
+					match self.get_master_index(){
+						None => Ok(()),
+						Some(master_index) => {
+							if minised_window.minimised{
+								self.remove_minimised_window(window);
+							};
+							self.windows.swap(master_index, window_index);
+							self.update_geometries();
+							self.focus_window(Some(window))
+						}
 					}
+				}else{
+					Err(FullscreenWMError::NoTiledWindow(window))
 				}
 			}
 		}
 	}
 
 
-	// Simlar approach than cycle_focus, but now the structure should be updated accordingly, that behavior can be done
-	// with the swap built-in method 
-	/// *** Improvement: here the minimised window should be unminimised if that is the case ***/
+	/// Simlar approach than cycle_focus, but now the Vec is affect, hence the order in which the windows were added is changed.
+    ///
+    /// If there is no focused window or if the number of tiled windows is less than 2 the funtion has no effects.
+    ///
+    /// The minimised windows are hidden in this function.
+    ///
+    /// After the sucessful swap, the geometries should be updated accordingly.
+	///
+    /// The fulscreen is removed whe this method is used
 	fn swap_windows(&mut self, dir: PrevOrNext){
+		//remove fullscreen, if any
 		for f_w in self.windows.iter_mut().filter(|x| (*x).fullscreen){
 			f_w.fullscreen = false;
 		};
@@ -620,7 +750,7 @@ impl TilingSupport for FullscreenWM {
 									Some(prev_index) => {
 										self.index_foused_window = Some(prev_index);
 										self.windows.swap(index, prev_index);
-										self.calculate_tiled_geometries();
+										self.update_geometries();
 									},
 									None => (),
 								}
@@ -631,11 +761,19 @@ impl TilingSupport for FullscreenWM {
 									Some(next_index) => {
 										self.index_foused_window = Some(next_index);
 										self.windows.swap(index, next_index);
-										self.calculate_tiled_geometries();
+										self.update_geometries();
 									},
 									None => (),
 								}
 							}
+						};
+						// remove minised window, if applied
+						match self.index_foused_window{
+							None => (),
+							Some(index_f_w) => {
+								let focused_window = self.windows.get(index_f_w).unwrap().clone();
+								self.remove_minimised_window(focused_window.window);
+							},
 						}
 					}else{
 						()
@@ -648,13 +786,15 @@ impl TilingSupport for FullscreenWM {
 
 impl FloatSupport for FullscreenWM {
 
-	// this is probably a pitfall of having both tiled and floating windows in one vector, now we have to iterate over the whole 
-	// collection filter out the non-floating windows and return it. Because the vec keeps the entire windows_with_info structure, 
-	// we to extract the window form it anyway.
+	/// return a vector that contains the floating windows managed by this window manager
+	///
+	/// I have to iterate over the whole collection to filter out the non-floating windows.
+	///
+	/// The minised and floating windows are filtered out too.
 	fn get_floating_windows(&self) -> Vec<Window>{
 		let mut temp_windows = Vec::new();
 
-		for window_with_info_floating in self.windows.iter().filter(|x|  (*x).float_or_tile == FloatOrTile::Float){
+		for window_with_info_floating in self.windows.iter().filter(|x|  (*x).float_or_tile == FloatOrTile::Float && !(*x).minimised){
 			temp_windows.push(window_with_info_floating.window.clone());
 		}
 
@@ -662,44 +802,103 @@ impl FloatSupport for FullscreenWM {
 	}
 
 
-	// This method is specially because can be applied to both tiled and floating windows
-	// so the approach is iterate ove thewhole windows, get the correcponding window and
-	// mutate the element, in this case the FloatOrTile  window_with_info structure of the given
-	// window
-
-	// this method does not affect fullscreen since once can change the layout of the Window
-	// which in this case is the previous layout and then when the full screen is not able anymore
-	// ir should be displayed as the corrrect window type
+	/// set the given window to a floating window if it was a tiled window or viceversa
+	///
+	/// if the given window was minised, after toggle_floating succeeds, such window should be unminimised
+	///
+	/// after the a sucessful toogle, the geometries of the tiled windows should be updated
+	///
+	/// if the given window is the fullscreen window, the it is removed
 	fn toggle_floating(&mut self, window: Window) -> Result<(), Self::Error>{
-		for f_w in self.windows.iter_mut().filter(|x| (*x).fullscreen){
-			f_w.fullscreen = false;
-		};
 		match self.windows.iter().position(|w| (*w).window == window) {
 			None => Err(FullscreenWMError::UnknownWindow(window)),
 
 			Some(i) => {
-				if let Some(win) = self.windows.get_mut(i) {
-					if win.float_or_tile == FloatOrTile::Tile{
-						(*win).geometry = (*win).saved_geometry;	
-						(*win).float_or_tile = FloatOrTile::Float;	
-					}else{
-						(*win).float_or_tile = FloatOrTile::Tile;
-					}
-
-				};
-				self.calculate_tiled_geometries();
-				Ok(())
+				let win_info = self.windows.get(i).unwrap().clone();
+				// if the given structure is fullscreen then it should be removed and
+				// added as floating or tiled window depending of the previous window type
+				// and focused
+				if win_info.fullscreen {
+					self.remove_window(win_info.window).unwrap();
+					let window_info;
+					if win_info.float_or_tile == FloatOrTile::Tile{
+										
+										window_info = WindowWithInfo {
+											window: win_info.window, 
+											geometry: win_info.saved_geometry, 
+											float_or_tile: FloatOrTile::Float, 
+											fullscreen: false,
+										};
+										
+									}else{
+										window_info = WindowWithInfo {
+											window: win_info.window, 
+											geometry: win_info.saved_geometry, 
+											float_or_tile: FloatOrTile::Tile, 
+											fullscreen: false,
+										};
+									};
+					self.add_window(window_info).unwrap();
+					Ok(()) 
+				}else{
+					if win_info.minimised{
+									self.remove_minimised_window(win_info.window);
+								};
+				
+								// store the current focused and 
+								let mut focused_window = None;
+								let fullscreen_window = self.get_fullscreen_window();
+								match self.index_foused_window{
+									None => (),
+									Some(index) => {
+										let window_info = self.windows.get(index).unwrap().clone();
+										focused_window = Some(window_info.window);
+									},
+								};
+							self.remove_window(win_info.window).unwrap();
+							let window_info;
+									if win_info.float_or_tile == FloatOrTile::Tile{
+										
+										window_info = WindowWithInfo {
+											window: win_info.window, 
+											geometry: win_info.saved_geometry, 
+											float_or_tile: FloatOrTile::Float, 
+											fullscreen: win_info.fullscreen,
+										};
+										
+									}else{
+										window_info = WindowWithInfo {
+											window: win_info.window, 
+											geometry: win_info.saved_geometry, 
+											float_or_tile: FloatOrTile::Tile, 
+											fullscreen: win_info.fullscreen,
+										};
+									};
+				self.add_window(window_info).unwrap();
+				
+								//after toogle the window, the geometries and the focused window should be updated if that it the case
+								// focus_window will always sucees since the window is already managed and it was removed in this toggle process
+								self.focus_window(focused_window).unwrap();
+								if !win_info.fullscreen{
+									match fullscreen_window{
+													None => (),
+													Some(windows_id) => self.set_fullscreen_window(windows_id),
+												}
+											};
+								self.update_geometries();
+								Ok(())}
 			}
 		}
 	}
 
-	/// The approach is iterate over the windows until I found the given window, the if it is a floating window
-	/// the corresponding window_with_info structure is mutated, otherwise a NoFloatingWindow error is thrown.
-	/// Once again the trade off of have two vectors for each window type, now if have to iterate over the whole vec
-	/// but at least the location of every window is saved with no extra structure
-	/// *** Improvement: here the minimised window should be unminimised if that is the case ***/
-	// similar, there is no new to change the layout of the fullscreen window, however it is important to
-	// store the new geometry in order to display correctly the window once that it is disable
+	/// set the given window to a floating window if it was a tiled window or viceversa
+	///
+	/// this function iterates over the windows until the given window is found, then if it is a floating window
+	/// the corresponding FloatingWindow structure is mutated, otherwise a NoFloatingWindow error is thrown.
+	///
+	/// if the given window is minised, it should be unminimised
+	///
+	/// The fullscreen window it is not affected by this function
 	fn set_window_geometry(&mut self, window: Window, new_geometry: Geometry)-> Result<(), Self::Error>
 	{
 		match self.windows.iter().position(|w| (*w).window == window) {
@@ -707,121 +906,72 @@ impl FloatSupport for FullscreenWM {
 
 			Some(i) => {
 				// it was already check that there is a window, so unwrap can be used
-				let window_with_info = self.windows.get_mut(i).unwrap(); 
+				let window_min = self.windows.get(i).unwrap().clone();
 
-				if window_with_info.float_or_tile == FloatOrTile::Tile{
-					Err(FullscreenWMError::NoFloatingWindow(window_with_info.window))
+				if window_min.float_or_tile == FloatOrTile::Tile{
+					Err(FullscreenWMError::NoFloatingWindow(window_min.window))
 				}else{
+					if window_min.minimised{
+						self.remove_minimised_window(window_min.window);
+					};	    
+					let window_with_info = self.windows.get_mut(i).unwrap(); 
 					(*window_with_info).saved_geometry = new_geometry;	
-					(*window_with_info).geometry = new_geometry;
+					(*window_with_info).geometry = new_geometry;				
 					Ok(())
-				}	           
+				}         
 			}
 		}
 	}
 }
 
 impl MinimiseSupport for FullscreenWM {
-	/// Return a vector of all the minimised windows.
-    ///
-    /// The order of the windows in the vector *does* matter.
-    ///
-    /// The windows must occur in the order they were minimised: the window
-    /// that was minimised first must occur first in the vector, the window
-    /// that was minimised last must occur last. This makes it easy to define
-    /// a function that unminimises the last minimised window.
+	/// Returns a vector of all the minimised windows.
+	///
+	/// the order in which the vec is returned as the order in whih minised elements were minised
     fn get_minimised_windows(&self) -> Vec<Window>{
     	self.minimised_windows.clone()
     }
 
 
-    /// Return `true` if the given window is minimised.
-    ///
-    /// This function must always return false when the given window is not
-    /// managed by the window manager.
-    ///
-    /// **Invariant**: if `is_minimised(w) == true` for some window `w`, then
-    /// `is_managed(w) == true`.
-    ///
-    /// **Invariant**: `is_minimised(w) == true` for some window `w`, iff the
-    /// vector returned by the `get_minimised_windows` method contains `w`.
-    ///
-    /// A default implementation is provided in terms of
-    /// `get_minimised_windows()`. Override this implementation if you have a
-    /// more efficient one.
+    /// Returns `true` if the given window is minimised.
     fn is_minimised(&self, window: Window) -> bool {
         self.get_minimised_windows().contains(&window)
     }
 
-    /// Minimise the given window, or when it is already minimised, unminise
-    /// it.
-    ///
-    /// When a minimised floating window is unminimised, it should float again
-    /// and have the same geometry as before. Hint: you could use the
-    /// `float_or_tile` field of `WindowWithInfo`. Analogously for fullscreen
-    /// windows.
-    ///
-    /// **Invariant**: if calling `toggle_minimised(w)` with an unminimised
-    /// window `w` succeeds, `w` may no longer be visible according to
-    /// `get_window_layout` and `is_minimised(w)` must return `true`.
-    ///
-    /// **Invariant**: if calling `toggle_minimised(w)` with an already
-    /// minimised window `w` succeeds, `w` must be visible according to
-    /// `get_window_layout` and `is_minimised(w)` must return `false`.
-    ///
-    /// The window layout before and after minimising and directly
-    /// unminimising the currently focused window should be the same. This
-    /// cannot hold for a window manager that implements
-    /// [`TilingSupport`](trait.TilingSupport.html). Try to figure out why.
-    /**** Improvement: There is a remove_minimised_window that should be reuse here ****/
-    /**** Improvement: Improve those awful nested if :S ****/
+   /// if the given window is minimised is unminimised or viceversa
+   ///
+   /// after toggle_minimised succeeds, the geometries should be updated
+   ///
+   /// if the given window is the fullscreen, the it is removed
+   ///
+   /// if the given window was focused and should be minised, then focused_window is set to None
     fn toggle_minimised(&mut self, window: Window) -> Result<(), Self::Error>{
-    	for f_w in self.windows.iter_mut().filter(|x| (*x).fullscreen){
-			f_w.fullscreen = false;
-		};
-    	if self.is_minimised(window){
-    		match self.minimised_windows.iter().position(|w| *w == window) {
-				None => Err(FullscreenWMError::UnknownWindow(window)),
-				Some(i) => { 
-					self.minimised_windows.remove(i);
-					match self.windows.iter().position(|w| (*w).window == window) {
-						None => Err(FullscreenWMError::UnknownWindow(window)),
-						Some(i) => { 
-							{
-								let unminimised_window = self.windows.get_mut(i).unwrap();
-								unminimised_window.minimised = false;
-							};
-							self.calculate_tiled_geometries();
-							Ok(())						
-						},
-					}
-				},
-			}
+    	if let Some(index_window) = self.windows.iter().position(|w| (*w).window == window){
+    		// remove fullscreen if the given window is a fullscreen
+    		self.remove_fullscreen_window(window);
+	    	if self.is_minimised(window){
+	    		self.remove_minimised_window(window)
+	    	}else{
+	    		// Non focused if is minised the current focused_window
+	    		match self.index_foused_window{
+	    			None => (),
+	    			Some(index_focused) => {
+	    				if index_focused == index_window{
+	    					self.index_foused_window = None
+	    				}
+	    			},
+	    		};
+	    		self.set_minimised_window(window)
+	    	};
+	    	Ok(self.update_geometries())
     	}else{
-    		match self.windows.iter().position(|w| (*w).window == window) {
-				None => Err(FullscreenWMError::UnknownWindow(window)),
-				Some(i) => { 
-					{
-						let minimised_window = self.windows.get_mut(i).unwrap();
-						minimised_window.minimised = true;
-						self.minimised_windows.push(minimised_window.window.clone());
-					}
-					self.calculate_tiled_geometries();
-					Ok(())
-				},
-			}
+    		Err(FullscreenWMError::UnknownWindow(window))
     	}
     }
 }
 
 impl FullscreenSupport for FullscreenWM {
 	/// Return the current fullscreen, if any.
-    ///
-    /// **Invariant**: if `get_fullscreen_window() == Some(w)`, then
-    /// `is_managed(w) == true`.
-    ///
-    /// **Invariant**: if `get_fullscreen_window() == Some(w)`, then
-    /// `get_focused_window() == Some(w)`.
     fn get_fullscreen_window(&self) -> Option<Window>{
     	let mut fullscreen = None;
     	for f_w in self.windows.iter().filter(|x| (*x).fullscreen){
@@ -833,39 +983,35 @@ impl FullscreenSupport for FullscreenWM {
     /// Make the given window fullscreen, or when it is already fullscreen,
     /// undo it.
     ///
-    /// When called on a window that is already fullscreen, it should restore
-    /// the window to the state before, e.g. float at the same place.
-    /// **Hint**: you could use the `float_or_tile` field of `WindowWithInfo`.
-    ///
-    /// **Invariant**: if calling `toggle_fullscreen(w)` with a window `w`
-    /// that is not yet fullscreen, `w` should be the only visible window
-    /// according to `get_window_layout`, its geometry should be the same size
-    /// as the screen, and `get_fullscreen_window(w) == Some(w)`.
-    ///
-    /// The window layout before and after calling `toggle_fullscreen` twice
-    /// with the currently focused should be the same. This cannot hold for a
-    /// window manager that implements
-    /// [`TilingSupport`](trait.TilingSupport.html). Try to figure out why.
+    // If the given window is minised, it should be unminimised
     fn toggle_fullscreen(&mut self, window: Window) -> Result<(), Self::Error>{
-    	match self.get_fullscreen_window(){
-    		None => {
-	    		self.set_fullscreen_window(window)
-	    	},
-    		Some(full_window) => {
-    			self.remove_fullscreen_window();
-    			if full_window != window{
-    				/*** Improvement : probabili you should get rid of the unwrap() method ***/
-    				self.focus_window(Some(window)).unwrap();
-    				self.set_fullscreen_window(window)
-    			}
-    		},
-    	};
-    	self.calculate_tiled_geometries();
-    	Ok(())
+    	match self.windows.iter().position(|w| (*w).window == window) {
+    		None => Err(FullscreenWMError::UnknownWindow(window)),
+    		Some(i) => {
+    			let window_min = self.windows.get(i).unwrap().clone();
+    		    	    		if window_min.minimised{
+    		    							self.remove_minimised_window(window_min.window);
+    		    				};
+    			match self.get_fullscreen_window(){	
+    		    	    		None => {
+    		    	    			self.focus_window(Some(window)).unwrap();
+    		    		    		self.set_fullscreen_window(window)
+    		    		    	},
+    		    	    		Some(full_window) => {
+    		    	    			self.remove_fullscreen_window(window_min.window);
+    		    	    			if full_window != window{
+    		    	    				self.focus_window(Some(window)).unwrap();
+    		    	    				self.set_fullscreen_window(window)
+    		    	    			}
+    		    	    		},
+    		    	    	};
+    		    	    	self.update_geometries();
+    		    	    	Ok(())}
+    	    }
     }
 }
 
-/*
+
 #[cfg(test)]
 mod tests {
 
@@ -1080,46 +1226,45 @@ mod tests {
 		wm.add_window(WindowWithInfo::new_tiled(5, SOME_GEOM)).unwrap();
 
 
-		//Focus should be in window 4
+		//previous should be 3
 		wm.cycle_focus(PrevOrNext::Prev);
 		let wl1 = wm.get_window_layout();
-		assert_eq!(Some(4), wl1.focused_window);
+		assert_eq!(Some(3), wl1.focused_window);
 
-		//Focus should be in window 3
+		//previous should be 1
 		wm.cycle_focus(PrevOrNext::Prev);
 		let wl2 = wm.get_window_layout();
-		assert_eq!(Some(3), wl2.focused_window);
+		assert_eq!(Some(1), wl2.focused_window);
 
-		//Focus should be in window 4
+		//previous should be 3
 		wm.cycle_focus(PrevOrNext::Next);
 		let wl3 = wm.get_window_layout();
-		assert_eq!(Some(4), wl3.focused_window);
+		assert_eq!(Some(3), wl3.focused_window);
 
-		//Focus should be in window 5
+		//previous should be 5
 		wm.cycle_focus(PrevOrNext::Next);
 		let wl4 = wm.get_window_layout();
 		assert_eq!(Some(5), wl4.focused_window);
 
-		//Focus should be in window 1
+		//Focus should be 2
 		wm.cycle_focus(PrevOrNext::Next);
 		let wl4 = wm.get_window_layout();
-		assert_eq!(Some(1), wl4.focused_window);
+		assert_eq!(Some(2), wl4.focused_window);
 
-		//Focus should be in window 2
+		//Focus should be 4
 		wm.cycle_focus(PrevOrNext::Next);
 		let wl5 = wm.get_window_layout();
-		assert_eq!(Some(2), wl5.focused_window);
+		assert_eq!(Some(4), wl5.focused_window);
 
 		//Focus should be in window 6, since is added 
 		wm.add_window(WindowWithInfo::new_tiled(6, SOME_GEOM)).unwrap();
 		let wl6 = wm.get_window_layout();
 		assert_eq!(Some(6), wl6.focused_window);
 
-		//Now focus should previous shpuld be 5, since the order in which were added now matters
+		//Now previous should be 5, since that was the last tiled window before adding 6
 		wm.cycle_focus(PrevOrNext::Prev);
 		let wl7 = wm.get_window_layout();
 		assert_eq!(Some(5), wl7.focused_window);
-
 	}
 
 	#[test]
@@ -1314,7 +1459,7 @@ mod tests {
 	fn test_floating_support() {
 
 		let mut wm = FullscreenWM::new(SCREEN);
-
+		
 		//Add some windows
 		wm.add_window(WindowWithInfo::new_tiled(1, SOME_GEOM)).unwrap();
 		wm.add_window(WindowWithInfo::new_tiled(2, SOME_GEOM)).unwrap();
@@ -1328,14 +1473,23 @@ mod tests {
 		//Now let's do 4 and 1 floating elementes
 		wm.toggle_floating(4).unwrap();
 		wm.toggle_floating(1).unwrap();
+		wm.toggle_floating(5).unwrap();
 
-		// since we keeot the order of the windows, no matters the order in which the toggle_floating funtion is applied
-		// for 1 and 4, the vector should return [1,4], since that was the order in which they were added.
-		assert_eq!(vec![1,4], wm.get_floating_windows());
+		// the order of the vector changed to [2,3,4,1,5], where 4 and 1 are floating windows
+		assert_eq!(vec![4,1,5], wm.get_floating_windows());
 
-		// now let check the layout, where tiled windows should be at the begining of the vec while floating elements,
+		// focused should remind to the last window added, 5
+		let wl = wm.get_window_layout();
+		assert_eq!(Some(5), wl.focused_window);
+
+		//Now I return window 5 to a tiled one and focuse window 4
+		wm.toggle_floating(5).unwrap();
+		wm.focus_window(Some(4)).unwrap();
+
+		// now let check the layout, where tiled windows should be at the begining of the vec while floating elements
 		// should at the last, both floating elements should have SOME_GEOM as geometry.
-		// The remining elements should have a proper geometry depending in its position [2,3,5]
+		// The remining elements should have a proper geometry depending in its position and focused floating element should be the 
+		// last element [2,3,5,1,4]
 		let master_half = Geometry {
 			x: 0,
 			y: 0,
@@ -1371,9 +1525,10 @@ mod tests {
 		let wl2 = wm.get_window_layout();
 		assert_eq!(vec![(2, master_half),(3, first_half),(5, second_half),(1, SOME_GEOM),(4,SCREEN_GEOM)], wl2.windows);
 
-		// now we use toggle_floating again in window 1, since windows one was the initial master window, now it should
-		// be allocated as master windows in the tiled layout. The appropiate modification of the entire tiled layout should be
+		// now we use toggle_floating again in window 1, allocated at the end of the tiled windows.
+		// The appropiate modification of the entire tiled layout should be
 		// reflected
+		// the focuse element should remind as 4
 		wm.toggle_floating(1).unwrap();
 
 		let first_half_a = Geometry {
@@ -1398,7 +1553,8 @@ mod tests {
 		};
 
 		let wl3 = wm.get_window_layout();
-		assert_eq!(vec![(1, master_half),(2, first_half_a),(3, second_half_a),(5, third_half_a),(4,SCREEN_GEOM)], wl3.windows);
+		assert_eq!(vec![(2, master_half),(3, first_half_a),(5, second_half_a),(1, third_half_a),(4,SCREEN_GEOM)], wl3.windows);
+		assert_eq!(Some(4), wl3.focused_window);
 
     	// **Invariant**: if `is_floating(w) == true` for some window `w`, then
     	// `is_managed(w) == true`.
@@ -1436,6 +1592,13 @@ mod tests {
 
 		let mut wm = FullscreenWM::new(SCREEN);
 
+		let master_half = Geometry {
+			x: 0,
+			y: 0,
+			width: 400,
+			height: 600,
+		};
+
 		//Add some windows
 		wm.add_window(WindowWithInfo::new_float(1, SOME_GEOM)).unwrap();
 		wm.add_window(WindowWithInfo::new_float(2, SOME_GEOM)).unwrap();
@@ -1444,16 +1607,27 @@ mod tests {
 		wm.add_window(WindowWithInfo::new_tiled(5, SOME_GEOM)).unwrap();
 		wm.add_window(WindowWithInfo::new_tiled(6, SOME_GEOM)).unwrap();
 
+		assert_eq!(wm.get_window_info(3).unwrap().geometry, master_half);
 		//No minimised windows
 		assert!(wm.get_minimised_windows().is_empty());
 
+		assert_eq!(wm.get_window_info(3).unwrap().geometry, master_half);
+
 		//Now let's minise window 5, 1 and 4
 		wm.toggle_minimised(5).unwrap();
+		assert_eq!(wm.get_window_info(3).unwrap().geometry, master_half);
 		wm.toggle_minimised(1).unwrap();
+		assert_eq!(wm.get_window_info(3).unwrap().geometry, master_half);
 		wm.toggle_minimised(4).unwrap();
+		assert_eq!(wm.get_window_info(3).unwrap().geometry, master_half);
 
 		// we have some minimised_windows, the array is given in the order the windows were minimised
 		assert_eq!(vec![5,1,4], wm.get_minimised_windows());
+
+
+		assert_eq!(true, wm.is_minimised(5));
+		assert_eq!(true, wm.is_minimised(1));
+		assert_eq!(true, wm.is_minimised(4));
 
 		// the window layout shows window 2 and 3 and 6, where 2 is floating and 3, 6 are tiled
 		let master_half = Geometry {
@@ -1469,6 +1643,10 @@ mod tests {
 			width: 400,
 			height: 600,
 		};
+
+		//assert_eq!(wm.get_window_info(3).unwrap().geometry, master_half);
+		assert_eq!(wm.get_window_info(3).unwrap().float_or_tile, FloatOrTile::Tile);
+		assert_eq!(wm.get_window_info(3).unwrap().fullscreen, false);
 
 		let wl1 = wm.get_window_layout();
 		assert_eq!(vec![(3, master_half),(6, second_half),(2, SOME_GEOM)], wl1.windows);
@@ -1505,6 +1683,7 @@ mod tests {
     	assert_eq!(vec![5,4,6], wm.get_minimised_windows());
 	}
 
+
 	#[test]
 	fn test_fullscreen_support() {
 
@@ -1529,6 +1708,10 @@ mod tests {
 	    assert_eq!(wm.get_fullscreen_window(), Some(7));
 	    assert_eq!(wm.is_managed(7), true);
 
+	    // the only window given by the get_window_layout is the fullscreen window
+	    let wl1 = wm.get_window_layout();
+		assert_eq!(vec![(7, FULLSCREEN)], wl1.windows);
+
 	    // **Invariant**: if `get_fullscreen_window() == Some(w)`, then
 	    // `get_focused_window() == Some(w)`.
 	    assert_eq!(wm.get_fullscreen_window(), Some(7));
@@ -1550,7 +1733,97 @@ mod tests {
 	    let wl1 = wm.get_window_layout();
 		assert_eq!(vec![(4, FULLSCREEN)], wl1.windows);
 		assert_eq!(wm.get_focused_window(), Some(4));
-	    
-	    // if I use toogle _
+		
+		// if I add new window then the new window is focused and the fullscreen is no longer enable
+		wm.add_window(WindowWithInfo::new_float(8, SOME_GEOM)).unwrap();
+		assert_eq!(wm.get_focused_window(), Some(8));
+		assert_eq!(wm.get_fullscreen_window(), None);
+
+		// I use toggle_fullscreen window 6 fullscreen 
+		wm.toggle_fullscreen(6).unwrap();
+		assert_eq!(wm.get_fullscreen_window(), Some(6));
+		assert_eq!(wm.get_focused_window(), Some(6));
+
+		// I focused window 1 and no fullscreen is found
+		wm.focus_window(Some(1)).unwrap();
+		assert_eq!(wm.get_focused_window(), Some(1));
+		assert_eq!(wm.get_fullscreen_window(), None);
+
+		// I used swap_with_master with window 4
+		// window 4 is now the master and the focused window
+		wm.swap_with_master(4).unwrap();
+		assert_eq!(wm.get_focused_window(), Some(4));
+		assert_eq!(wm.get_master_window(), Some(4));
+		
+		// I use toggle_fullscreen window 4 fullscreen 
+		wm.toggle_fullscreen(4).unwrap();
+		assert_eq!(wm.get_fullscreen_window(), Some(4));
+		assert_eq!(wm.get_focused_window(), Some(4));
+
+		// I use swap_windows to next element since the focuse window is the fullscreen window 
+		// after use¡ing it, no fullscreen should be there and 4 is still focused
+		wm.swap_windows(PrevOrNext::Next);
+		assert_eq!(wm.get_fullscreen_window(), None);
+		assert_eq!(wm.get_focused_window(), Some(4));
+
+		// I use toggle_fullscreen window 1 fullscreen 
+		wm.toggle_fullscreen(1).unwrap();
+		assert_eq!(wm.get_fullscreen_window(), Some(1));
+		assert_eq!(wm.get_focused_window(), Some(1));
+
+		// minised window 4, since if can be minised in second plan the fullscreen is still available
+		wm.toggle_minimised(4).unwrap();
+		assert_eq!(wm.is_minimised(4), true);
+		assert_eq!(wm.get_fullscreen_window(), Some(1));
+		assert_eq!(wm.get_focused_window(), Some(1));
+
+		// minised window 1, then no fullscreen is available and no focused window
+		wm.toggle_minimised(1).unwrap();
+		assert_eq!(wm.is_minimised(4), true);
+		assert_eq!(wm.is_minimised(1), true);
+		assert_eq!(wm.get_fullscreen_window(), None);
+		assert_eq!(wm.get_focused_window(), None);
+
+		// I use toggle_fullscreen window 4 fullscreen 
+		wm.toggle_fullscreen(4).unwrap();
+		assert_eq!(wm.get_fullscreen_window(), Some(4));
+		assert_eq!(wm.get_focused_window(), Some(4));
+
+		// Making floating window 1 should not affect the fullscreen window
+		wm.toggle_floating(1).unwrap();
+		assert_eq!(wm.get_fullscreen_window(), Some(4));
+		assert_eq!(wm.get_focused_window(), Some(4));
+
+		// it is not the case if 4 is transform to a tiled window
+		wm.toggle_floating(4).unwrap();
+		assert_eq!(wm.get_fullscreen_window(), None);
+		assert_eq!(wm.get_focused_window(), Some(4));
+
+		// I use toggle_fullscreen window 2 fullscreen 
+		wm.toggle_fullscreen(2).unwrap();
+		assert_eq!(wm.get_fullscreen_window(), Some(2));
+		assert_eq!(wm.get_focused_window(), Some(2));
+
+		// I removed window 1, previous fullscreen should remain
+		wm.remove_window(1).unwrap();
+		assert_eq!(wm.get_fullscreen_window(), Some(2));
+		assert_eq!(wm.get_focused_window(), Some(2));
+
+		// I removed window 2, no fullscreen and no fucused window is managed
+		wm.remove_window(2).unwrap();
+		assert_eq!(wm.get_fullscreen_window(), None);
+		assert_eq!(wm.get_focused_window(), None);
+
+		// I use toggle_fullscreen window 2 fullscreen 
+		wm.toggle_fullscreen(6).unwrap();
+		assert_eq!(wm.get_fullscreen_window(), Some(6));
+		assert_eq!(wm.get_focused_window(), Some(6));
+
+		// I resize the window, then fullscreen should update its geometry
+		wm.resize_screen(SCREEN2);
+		assert_eq!(wm.get_screen(), SCREEN2);
+		let wl1 = wm.get_window_layout();
+		assert_eq!(vec![(6, wm.screen.to_geometry())], wl1.windows);
+
 	}
-}*/
+}
