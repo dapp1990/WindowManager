@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["MinimisingWMError","**TODO**: Documentation"]],"struct":[["MinimisingWM","The MinimisingWM struct"]],"type":[["WMName","**TODO**: Documentation"]]});

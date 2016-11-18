@@ -1,1 +1,0 @@
-initSidebarItems({"mod":[["a_fullscreen_wm","Fullscreen Window Manager"],["b_tiling_wm","Tiling Window Manager"],["c_floating_windows","Floating Windows"],["d_minimising_windows","Minimising Windows"]]});

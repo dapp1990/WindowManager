@@ -1,1 +1,0 @@
-{"rustc":17057659172491969946,"target":432810769475118915,"profile":16291553864756094723,"local":{"variant":"Precalculated","fields":["1478799991.000000000s (/Users/Daniel/GitHub/WindowManager/cplwm/api/src/types.rs)"]},"features":"None","deps":[["rustc-serialize v0.3.19",14334196747436174776],["rustc-serialize v0.3.19",466985807366191799]],"rustflags":[]}

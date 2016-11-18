@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["FloatingWMError","**TODO**: Documentation"]],"struct":[["FloatingWM","The FloatingWM struct"]],"type":[["WMName","**TODO**: Documentation"]]});
