@@ -428,13 +428,12 @@ impl WindowManager for FloatingWM {
                         Some(partion_index) => {
                             if partion_index >= index &&
                                window_type.float_or_tile == FloatOrTile::Float {
-                                match temp_windows.iter().position(|w| (*w) 
+                                match temp_windows.iter().position(|w| (*w)
                                     == (window_type.window,window_type.
                                         geometry)) {
 										None => (),
-
-										Some(real_index) => {
-											let (temp_window,temp_geometry) 
+                                        Some(real_index) => {
+											let (temp_window,temp_geometry)
                                             = temp_windows.get(real_index).
                                             unwrap().clone();
 											temp_windows.remove(real_index);
