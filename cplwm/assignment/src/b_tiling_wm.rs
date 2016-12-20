@@ -23,20 +23,31 @@
 //!
 //! ## General approach
 //!
-//! Since now we are dealing with a master window, the way the windows are added matters, according with the algorithm
-//! new window should be added to the bottom right of the window. It is convenient to keep the order in our collection to
-//! adapt the different layout of the no-master windows. Also there is a new function that swap the layout of the master
-//! window with another window, so it is also handy to just look over the index of the given window and then make the change
-//! using the swap build-in method with the first element of the collection (which will be always represents the master window).
+//! Since now we are dealing with a master window, the way the windows are
+//! added matters, according with the algorithm
+//! new window should be added to the bottom right of the window. It is
+//! convenient to keep the order in our collection to
+//! adapt the different layout of the no-master windows. Also there is a new
+//! function that swap the layout of the master
+//! window with another window, so it is also handy to just look over the
+//! index of the given window and then make the change
+//! using the swap build-in method with the first element of the collection
+//! (which will be always represents the master window).
 //!
-//! If one want to keep the order of the collection and swap windows position without focused windows, the focused element
-//! then should be swap with the internal element of the collection and reorder the collection to get the correct focused element.
-//! To avoid such behavior, I store the index of focused window in the TillingWM structure.
+//! If one want to keep the order of the collection and swap windows position
+//! without focused windows, the focused element
+//! then should be swap with the internal element of the collection and
+//! reorder the collection to get the correct focused element.
+//! To avoid such behavior, I store the index of focused window in the
+//! TillingWM structure.
 //!
-//! Even further, according with the description of swap_windows(), the focus window seems like an optional value, it is not
-//! necessary some window should be focus, so intead of just store a plain number index, an Option<int> will be stored.
+//! Even further, according with the description of swap_windows(), the focus
+//! window seems like an optional value, it is not
+//! necessary some window should be focus, so intead of just store a plain
+//! number index, an Option<int> will be stored.
 //!
-//! VecDeque is not longer used since the focused window was decoupled from the  windows Vector.
+//! VecDeque is not longer used since the focused window was decoupled from
+//! the  windows Vector.
 
 // Add imports here
 use std::error;
@@ -52,12 +63,14 @@ pub type WMName = TillingWM;
 /// The TillingWM struct
 #[derive(RustcDecodable, RustcEncodable, Debug, Clone)]
 pub struct TillingWM {
-    /// A vector of WindowWithInfo, it keeps the order in which the windows were added or
+    /// A vector of WindowWithInfo, it keeps the order in which the windows
+    /// were added or
     /// the order affected by functions *swap_with_master* and *swap_windows*.
     pub windows: Vec<WindowWithInfo>,
     /// The size of the screen.
     pub screen: Screen,
-    /// The index of the focused window in the *windows*, if there is no focused window a None is found.
+    /// The index of the focused window in the *windows*, if there is no
+    /// focused window a None is found.
     pub index_foused_window: Option<usize>,
 }
 
@@ -65,26 +78,35 @@ pub struct TillingWM {
 impl TillingWM {
     /// This method calculated the geometries of windows.
     ///
-    /// when it is called, updates the geometry of each individual window according with the order in which imposed by *windows*,
-    /// which implies that always the first element of *windows* will be the master window.
+    /// when it is called, updates the geometry of each individual window
+    /// according with the order in which imposed by *windows*,
+    /// which implies that always the first element of *windows* will be the
+    /// master window.
     fn update_geometries(&mut self) {
-        // I start to calculate the different values of the windows, because of the approach used in this windows manager
-        // it is known that the windows are actually ordered in the collection, hence the first element of vec is the first
-        // added, second element of vec is the second one and so on. So I can iterate over vec and arrange the size of the
-        // height attribute, width attribute is a constant for all windows, even for the master window.
-        // On every iteration every window is updated to the proper position. There is a special case with the
+        // I start to calculate the different values of the windows, because
+        // of the approach used in this windows manager
+        // it is known that the windows are actually ordered in the
+        // collection, hence the first element of vec is the first
+        // added, second element of vec is the second one and so on. So I
+        // can iterate over vec and arrange the size of the
+        // height attribute, width attribute is a constant for all windows,
+        // even for the master window.
+        // On every iteration every window is updated to the proper position.
+        // There is a special case with the
         // master window which is handled with a if statement.
         if !self.windows.is_empty() {
 
             let divisor = (self.windows.len() - 1) as u32;
 
-            // if the divisor is greater than 0 we need to calculate slave windows
+            // if the divisor is greater than 0 we need to calculate slave
+            // windows
             if divisor > 0 {
                 let height_side = self.screen.height / divisor;
                 let width_side = self.screen.width / 2;
                 let x_point = (self.screen.width / 2) as i32;
 
-                // It is already tested that there is more than 1 window, hence one can use unwrap method being sure that
+                // It is already tested that there is more than 1 window,
+                // hence one can use unwrap method being sure that
                 // some intance of option will be returned.
                 let master_window = self.get_master_window().unwrap();
 
@@ -92,7 +114,8 @@ impl TillingWM {
 
                 for tiled_window in self.windows.iter_mut() {
                     if master_window != tiled_window.window {
-                        // I calculate the values of the secondary windows (right windows).
+                        // I calculate the values of the secondary windows
+                        //  (right windows).
                         let rigth_geometry = Geometry {
                             x: x_point,
                             y: y_point,
@@ -114,8 +137,10 @@ impl TillingWM {
                     }
                 }
             } else {
-                // The divisor is 0, then there is only one window, the master window which is set to fullscreen.
-                // unwrap() is used because I ensure there is at least one element
+                // The divisor is 0, then there is only one window, the
+                // master window which is set to fullscreen.
+                // unwrap() is used because I ensure there is at least one
+                // element
                 let window = self.windows.get_mut(0).unwrap();
                 window.geometry = self.screen.to_geometry();
             }
@@ -159,7 +184,8 @@ impl WindowManager for TillingWM {
 
     /// The TillingWM constructor.
     ///
-    /// windows is initialised as empty vec, screen as the given screen and focused index as None.
+    /// windows is initialised as empty vec, screen as the given screen and
+    /// focused index as None.
     fn new(screen: Screen) -> TillingWM {
         TillingWM {
             windows: Vec::new(),
@@ -193,16 +219,20 @@ impl WindowManager for TillingWM {
 
     /// adds new window_with_info to the vec windows
     ///
-    /// the non-tiled windows are accepted and added, but they are treated as tiled window no matter the attributes of the given window_with_info.
+    /// the non-tiled windows are accepted and added, but they are treated as
+    /// tiled window no matter the attributes of the given window_with_info.
     ///
-    /// returns an ManagedWindow error if the given window_with_info is already managed by the window manager .
+    /// returns an ManagedWindow error if the given window_with_info is
+    /// already managed by the window manager .
     fn add_window(&mut self, window_with_info: WindowWithInfo) -> Result<(), Self::Error> {
         if !self.is_managed(window_with_info.window) {
             self.windows.push(window_with_info);
-            // the new added element (the last element in the vec) is always the focused one.
+            // the new added element (the last element in the vec) is always
+            // the focused one.
             let temp = self.windows.len() - 1;
             self.index_foused_window = Some(temp);
-            // now it is important to update the geometries of the tiled windows after adding a new window.
+            // now it is important to update the geometries of the tiled
+            // windows after adding a new window.
             self.update_geometries();
             Ok(())
         } else {
@@ -212,8 +242,11 @@ impl WindowManager for TillingWM {
 
     /// removes the given window from the window manager.
     ///
-    /// Now we need to keep track of the focused element, every time that an element is removed the index_foused_window should be updated if it is necessary.
-    /// Important to noticy here is that when the focused element is the same as the removed element, no focused window is set.
+    /// Now we need to keep track of the focused element, every time that an
+    /// element is removed the index_foused_window should be updated if it is
+    /// necessary.
+    /// Important to noticy here is that when the focused element is the same
+    /// as the removed element, no focused window is set.
     fn remove_window(&mut self, window: Window) -> Result<(), Self::Error> {
         match self.windows.iter().position(|w| (*w).window == window) {
             None => Err(TillingWMError::UnknownWindow(window)),
@@ -228,7 +261,8 @@ impl WindowManager for TillingWM {
                             Ok(())
                         } else {
                             let mut temp = index;
-                            // if the focused window was in the left side of Vec it is not need to updated,
+                            // if the focused window was in the left side of
+                            // Vec it is not need to updated,
                             // otherwise the index_foused_window is updated.
                             if index > i {
                                 temp = index - 1;
@@ -271,8 +305,10 @@ impl WindowManager for TillingWM {
 
     /// set the focused window in the window manager with the given window.
     ///
-    /// focus_window was slightly modified to adapt to the new attirbute in the TillingWM structure, now when None is passed
-    /// there will be no focused window. The *windows* order is not affected now.
+    /// focus_window was slightly modified to adapt to the new attirbute in
+    /// the TillingWM structure, now when None is passed
+    /// there will be no focused window. The *windows* order is not affected
+    /// now.
     fn focus_window(&mut self, window: Option<Window>) -> Result<(), Self::Error> {
         match window {
             None => {
@@ -295,10 +331,13 @@ impl WindowManager for TillingWM {
 
     /// back/forth to the next window from the current focused window.
     ///
-    /// cycle_focus was modifed to support the next and previous methods according with the index, now the structure itself it is
-    /// not modified, index_foused_window is updated instead. When no window is focused, the Master window is focused.
+    /// cycle_focus was modifed to support the next and previous methods
+    /// according with the index, now the structure itself it is
+    /// not modified, index_foused_window is updated instead. When no window
+    /// is focused, the Master window is focused.
     ///
-    /// the order in which the windows are transvered is given by the order of *windows* vec at the momment this function is used.
+    /// the order in which the windows are transvered is given by the order
+    /// of *windows* vec at the momment this function is used.
     fn cycle_focus(&mut self, dir: PrevOrNext) {
         if self.windows.len() > 1 {
             match self.index_foused_window {
@@ -340,7 +379,8 @@ impl WindowManager for TillingWM {
 
     /// gets the complete current information of the given window.
     ///
-    /// If the given window is not managed by the window manager, UnknownWindow error is shown.
+    /// If the given window is not managed by the window manager,
+    /// UnknownWindow error is shown.
     fn get_window_info(&self, window: Window) -> Result<WindowWithInfo, Self::Error> {
         match self.windows.iter().position(|w| (*w).window == window) {
             None => Err(TillingWMError::UnknownWindow(window)),
@@ -355,7 +395,8 @@ impl WindowManager for TillingWM {
 
     /// set the given screen as new screen size.
     ///
-    /// The geometries should be updated accordingly with the new given screen.
+    /// The geometries should be updated accordingly with the new given
+    /// screen.
     fn resize_screen(&mut self, screen: Screen) {
         self.screen = screen;
         self.update_geometries()
@@ -364,9 +405,11 @@ impl WindowManager for TillingWM {
 
 
 impl TilingSupport for TillingWM {
-    /// if *windows* is not empty it returns the master window, otherwise return None.
+    /// if *windows* is not empty it returns the master window, otherwise
+    /// return None.
     ///
-    /// In this window manager the first element of the *windows* vec is always the master window.
+    /// In this window manager the first element of the *windows* vec is
+    /// always the master window.
     fn get_master_window(&self) -> Option<Window> {
         if !self.windows.is_empty() {
             // unwrap() is used since it is sure that *windows* is not empty
@@ -378,9 +421,11 @@ impl TilingSupport for TillingWM {
 
     /// swap the position of the given window with the master window.
     ///
-    /// This functions actually affects the order in which the windows were added, also the geometries should be updated accordingly.
+    /// This functions actually affects the order in which the windows were
+    /// added, also the geometries should be updated accordingly.
     ///
-    /// In case the given window is the master window  and the window master is not focused, the only effect of this funtions is
+    /// In case the given window is the master window  and the window master
+    /// is not focused, the only effect of this funtions is
     /// changing the focused windows to the master window.
     fn swap_with_master(&mut self, window: Window) -> Result<(), Self::Error> {
         match self.windows.iter().position(|w| (*w).window == window) {
@@ -395,11 +440,13 @@ impl TilingSupport for TillingWM {
     }
 
 
-    /// Simlar approach than cycle_focus, but now the Vec is affected, hence the order in which the windows were added is changed.
+    /// Simlar approach than cycle_focus, but now the Vec is affected,
+    /// hence the order in which the windows were added is changed.
     ///
     /// If there is no focused window the funtion has no effects.
     ///
-    /// After the sucessful swap, the geometries should be updated accordingly.
+    /// After the sucessful swap, the geometries should be updated
+    /// accordingly.
     fn swap_windows(&mut self, dir: PrevOrNext) {
         if self.windows.len() > 1 {
             match self.index_foused_window {
@@ -541,7 +588,8 @@ mod tests {
         assert_eq!(vec![1], wm.get_windows());
         // According to the window layout
         let wl3 = wm.get_window_layout();
-        // because the new behavior, window 1 should not be focused, No window is focused
+        // because the new behavior, window 1 should not be focused, No
+        // window is focused
         assert_eq!(None, wl3.focused_window);
 
         let third_half = Geometry {
@@ -571,7 +619,8 @@ mod tests {
             width: 400,
             height: 150,
         };
-        // I add more window, which shoudl be allocated in the right side of the window
+        // I add more window, which shoudl be allocated in the right side of
+        // the window
         wm.add_window(WindowWithInfo::new_tiled(3, SOME_GEOM)).unwrap();
         wm.add_window(WindowWithInfo::new_tiled(4, SOME_GEOM)).unwrap();
         wm.add_window(WindowWithInfo::new_tiled(5, SOME_GEOM)).unwrap();
@@ -601,7 +650,8 @@ mod tests {
         wm.add_window(WindowWithInfo::new_tiled(4, SOME_GEOM)).unwrap();
         wm.add_window(WindowWithInfo::new_tiled(5, SOME_GEOM)).unwrap();
 
-        // Now an action should be applied, when None is given to focus_window the current focused window should be unfocused.
+        // Now an action should be applied, when None is given to
+        // focus_window the current focused window should be unfocused.
         wm.focus_window(None).unwrap();
 
         // Focused window should return None
@@ -629,7 +679,8 @@ mod tests {
         wm.remove_window(5).unwrap();
         wm.focus_window(Some(1)).unwrap();
         wm.remove_window(1).unwrap();
-        // Because the last focused window was removed, the focused_window attribute should be None
+        // Because the last focused window was removed, the focused_window
+        // attribute should be None
         let wl5 = wm.get_window_layout();
         assert_eq!(None, wl5.focused_window);
     }
@@ -685,7 +736,8 @@ mod tests {
         let wl6 = wm.get_window_layout();
         assert_eq!(Some(6), wl6.focused_window);
 
-        // Now focus should previous shpuld be 5, since the order in which were added now matters
+        // Now focus should previous shpuld be 5, since the order in which
+        // were added now matters
         wm.cycle_focus(PrevOrNext::Prev);
         let wl7 = wm.get_window_layout();
         assert_eq!(Some(5), wl7.focused_window);
@@ -704,8 +756,10 @@ mod tests {
         wm.add_window(WindowWithInfo::new_tiled(6, SOME_GEOM)).unwrap();
 
 
-        // All screens should have different size, since now we are dealing with
-        // tiled funtions, it should be reflec since they are added, removed or toggled
+        // All screens should have different size, since now we are dealing
+        // with
+        // tiled funtions, it should be reflec since they are added,
+        // removed or toggled
 
         let master_half = Geometry {
             x: 0,
@@ -776,14 +830,16 @@ mod tests {
         let wl1 = wm.get_window_layout();
         assert_eq!(Some(4), wl1.focused_window);
 
-        // swapping from master to master, no swap action is taken. Focused window is changed, though.
+        // swapping from master to master, no swap action is taken. Focused
+        // window is changed, though.
 
         wm.swap_with_master(1).unwrap();
         let wl2 = wm.get_window_layout();
 
         assert_eq!(Some(1), wl2.focused_window);
 
-        // swapping from master to window 3, now window 3 is master window and is focused
+        // swapping from master to window 3, now window 3 is master window
+        // and is focused
         wm.swap_with_master(3).unwrap();
         let wl3 = wm.get_window_layout();
         assert_eq!(Some(3), wm.get_master_window());
@@ -793,8 +849,10 @@ mod tests {
         // Traying to swap from master to an unknown window, erro is thrown
         assert!(wm.swap_with_master(10).is_err());
 
-        // Since previously I used  swap_with_master the collection was updated to [3,2,1,4], where 3 is the master window
-        // using swap_windows(PrevOrNext::Prev) should be allocate windows 4 as master window and put window 3 in the bottom right corner
+        // Since previously I used  swap_with_master the collection was
+        // updated to [3,2,1,4], where 3 is the master window
+        // using swap_windows(PrevOrNext::Prev) should be allocate windows
+        // 4 as master window and put window 3 in the bottom right corner
         // of the window. Moreover windows 3 should be focused.
         let master_half = Geometry {
             x: 0,
@@ -836,7 +894,8 @@ mod tests {
         assert_eq!(vec![(4, master_half), (2, first_half), (1, second_half), (3, third_half)],
                    wl4.windows);
 
-        // I change focused to master window and apply swap_windows(PrevOrNext::Next), the result should be window 2 as
+        // I change focused to master window and apply
+        // swap_windows(PrevOrNext::Next), the result should be window 2 as
         // master window while windows 4 is focused
         wm.focus_window(Some(4)).unwrap();
         wm.swap_windows(PrevOrNext::Next);
@@ -846,20 +905,21 @@ mod tests {
         assert_eq!(vec![(2, master_half), (4, first_half), (1, second_half), (3, third_half)],
                    wl5.windows);
 
-        // **Invariant**: if `swap_with_master(w)` succeeds, `get_master_window()
+        // **Invariant**: if `swap_with_master(w)` succeeds,
+        // `get_master_window()
         // == Some(w)`.
         wm.swap_with_master(1).unwrap();
         assert_eq!(wm.get_master_window(), Some(1));
 
-        // **Invariant**: `get_master_window() == Some(w)`, then `w` must occur
-        // in the vector returned by `get_windows()`.
+        // **Invariant**: `get_master_window() == Some(w)`, then `w` must
+        // occur in the vector returned by `get_windows()`.
 
         let master_window = wm.get_master_window().unwrap();
         let windows = wm.get_windows();
         assert!(windows.contains(&master_window));
 
-        // **Invariant**: if the vector returned by `get_windows()` is empty =>
-        // `get_master_window() == None`.
+        // **Invariant**: if the vector returned by `get_windows()` is empty
+        // => `get_master_window() == None`.
         wm.remove_window(2).unwrap();
         wm.remove_window(3).unwrap();
         wm.remove_window(4).unwrap();

@@ -27,11 +27,14 @@
 //!
 //! ## General approach
 //!
-//! It is a request to kept tracking the position of the minimised elements, the best way I concuded to do this is ordering
-//! in a collection, in this case a *minimised_windows* vec is used to keep tracking the order of minimised elements, such vector it is part of the
+//! It is a request to kept tracking the position of the minimised elements,
+//! the best way I concuded to do this is ordering
+//! in a collection, in this case a *minimised_windows* vec is used to keep
+//! tracking the order of minimised elements, such vector it is part of the
 //! MinimisingWM structure.
 //!
-//! To know where windows are minised a new attribute is added to the previous FloatingWindow which was renamed to MinimisedWindow.
+//! To know where windows are minised a new attribute is added to the
+//! previous FloatingWindow which was renamed to MinimisedWindow.
 
 // Add imports here
 use std::error;
@@ -57,7 +60,8 @@ pub struct MinimisedWindow {
     pub saved_geometry: Geometry,
     /// Indicate whether the window should float or tile.
     pub float_or_tile: FloatOrTile,
-    /// Indicate whether the window should be displayed fullscreen or not. Although it is not supported in this WM
+    /// Indicate whether the window should be displayed fullscreen or not.
+    /// Although it is not supported in this WM
     pub fullscreen: bool,
     /// Indicate whether the window is minimised or not.
     pub minimised: bool,
@@ -66,14 +70,16 @@ pub struct MinimisedWindow {
 /// The MinimisingWM struct
 #[derive(RustcDecodable, RustcEncodable, Debug, Clone)]
 pub struct MinimisingWM {
-    /// A vector of FloatingWindow, it keeps the order in which the windows were added or
+    /// A vector of FloatingWindow, it keeps the order in which the windows
+    /// were added or
     /// the order affect by functions *swap_with_master* and *swap_windows*.
     pub windows: Vec<MinimisedWindow>,
     /// Vector that stores the order in which the windows were minimised.
     pub minimised_windows: Vec<Window>,
     /// Indicate whether the window should float or tile.
     pub screen: Screen,
-    /// The index of the focused window in the *windows*, if there is no focused window a None is found.
+    /// The index of the focused window in the *windows*, if there is no
+    /// focused window a None is found.
     pub index_foused_window: Option<usize>,
 }
 
@@ -81,8 +87,10 @@ pub struct MinimisingWM {
 impl MinimisingWM {
     /// return the next tiled window from the given index
     ///
-    /// it loops over the *windows* vec in its current order, it loops over it, skipping non-tiled windows, until either the next right side tile index is found or
-    /// it reached the given index (in which a None is returned)
+    /// it loops over the *windows* vec in its current order, it loops over
+    /// it, skipping non-tiled windows, until either the next right side tile
+    /// index is found or it reached the given index (in which a None
+    /// is returned)
     pub fn get_next_tile_index(&self, index: usize, saved: usize) -> Option<usize> {
         let mut next_index = 0;
         if self.windows.len() - 1 > index {
@@ -106,7 +114,9 @@ impl MinimisingWM {
 
     /// return the previous tiled window from the given index
     ///
-    /// it loops over the *windows* vec in its current order, it loops over it, skipping non-tiled windows, until either the next left side tile index is found or
+    /// it loops over the *windows* vec in its current order, it loops over
+    /// it, skipping non-tiled windows, until either the next left side tile
+    /// index is found or
     /// it reached the given index (in which a None is returned)
     pub fn get_prev_tile_index(&self, index: usize, saved: usize) -> Option<usize> {
         let mut prev_index = self.windows.len() - 1;
@@ -131,7 +141,8 @@ impl MinimisingWM {
 
     /// get the master window index
     ///
-    /// the logic of the c_floating_windows reminds, the first tiled element of the list is the master window,
+    /// the logic of the c_floating_windows reminds, the first tiled element
+    /// of the list is the master window,
     /// but now it skips both floating and minised elements
     fn get_master_index(&self) -> Option<usize> {
         if !self.windows.is_empty() {
@@ -164,14 +175,16 @@ impl MinimisingWM {
                 self.get_minimised_floating_windows().len() + 1;
             let total_windows = self.windows.len();
 
-            // if the divisor is greater than 0 we need to calculate slave windows
+            // if the divisor is greater than 0 we need to calculate
+            // slave windows
             if total_windows > non_tiled_windows {
                 let divisor = total_windows - non_tiled_windows;
                 let divisor_2 = divisor as u32;
                 let height_side = self.screen.height / divisor_2;
                 let width_side = self.screen.width / 2;
                 let x_point = (self.screen.width / 2) as i32;
-                // It is already tested that there is more than 1 window, hence one can use unwrap method being sure that a
+                // It is already tested that there is more than 1 window,
+                // hence one can use unwrap method being sure that a
                 // Some intance of option will be returned
                 let master_window = self.get_master_window().unwrap();
 
@@ -181,7 +194,8 @@ impl MinimisingWM {
                     .iter_mut()
                     .filter(|x| (*x).float_or_tile == FloatOrTile::Tile && !(*x).minimised) {
                     if master_window != minimised_window.window {
-                        // I calculate the values of the secondary windows (right windows)
+                        // I calculate the values of the secondary windows
+                        // (right windows)
                         let rigth_geometry = Geometry {
                             x: x_point,
                             y: y_point,
@@ -204,11 +218,13 @@ impl MinimisingWM {
                     }
                 }
             } else {
-                // It could be the posibility that there is just one window (the master window)
+                // It could be the posibility that there is just one window
+                // (the master window)
                 match self.get_master_index() {
                     None => (),
                     Some(i) => {
-                        // unwrap() is used because I ensure there is at least one element
+                        // unwrap() is used because I ensure there is at
+                        // least one element
                         let window = self.windows.get_mut(i).unwrap();
                         window.geometry = self.screen.to_geometry();
                     }
@@ -239,8 +255,9 @@ impl MinimisingWM {
         temp_windows
     }
 
-    /// Removes the given window from the *minimised_windows* vector and set its attribute to false in the corresponding
-    // window of *windows* vector
+    /// Removes the given window from the *minimised_windows* vector and set
+    /// its attribute to false in the corresponding
+    /// window of *windows* vector
     fn remove_minimised_window(&mut self, window: Window) {
         match self.minimised_windows.iter().position(|w| *w == window) {
             None => (),
@@ -249,7 +266,8 @@ impl MinimisingWM {
                 match self.windows.iter().position(|w| (*w).window == window) {
                     None => (),
                     Some(i_2) => {
-                        // unwrap() is used because Some(i_2) ensures there is at least one element
+                        // unwrap() is used because Some(i_2) ensures there
+                        // is at least one element
                         self.windows.get_mut(i_2).unwrap().minimised = false;
                     }
                 }
@@ -257,13 +275,15 @@ impl MinimisingWM {
         }
     }
 
-    /// set the given window to the *minimised_windows* vector and set its attribute to true in the corresponding
-    // window of *windows* vector
+    /// set the given window to the *minimised_windows* vector and set its
+    /// attribute to true in the corresponding
+    /// window of *windows* vector
     fn set_minimised_window(&mut self, window: Window) {
         match self.windows.iter().position(|w| (*w).window == window) {
             None => (),
             Some(i) => {
-                // unwrap() is used because Some(i) ensures there is at least one element
+                // unwrap() is used because Some(i) ensures there is at least
+                // one element
                 let window_min = self.windows.get_mut(i).unwrap();
                 window_min.minimised = true;
                 self.minimised_windows.push(window_min.window.clone());
@@ -319,7 +339,8 @@ impl WindowManager for MinimisingWM {
 
     /// The MinimisingWM constructor.
     ///
-    /// windows and minimised_windows are initialised as empty vec, screen as the given screen and focused index as None.
+    /// windows and minimised_windows are initialised as empty vec, screen
+    /// as the given screen and focused index as None.
     fn new(screen: Screen) -> MinimisingWM {
         MinimisingWM {
             windows: Vec::new(),
@@ -351,14 +372,20 @@ impl WindowManager for MinimisingWM {
     }
 
 
-    /// adds new window_with_info to the vec windows and set the geometry to fullscreen.
+    /// adds new window_with_info to the vec windows and set the geometry
+    /// to fullscreen.
     ///
-    /// the fullscreen windows are accepted and added, but they are treated as tiled or floating window. The given geometry by the window_with_info
-    /// is set as the saved_geometry and geometry attributes of the FloatingWindow structure. Minised attribute is always set as false.
+    /// the fullscreen windows are accepted and added, but they are treated
+    /// as tiled or floating window. The given geometry by the
+    /// window_with_info is set as the saved_geometry and geometry attributes
+    /// of the FloatingWindow structure. Minised attribute is always set as
+    /// false.
     ///
-    /// if the given window has an attribute FloatOrTile::Tile then the geometries for tiled windows should be updated.
+    /// if the given window has an attribute FloatOrTile::Tile then the
+    /// geometries for tiled windows should be updated.
     ///
-    /// returns a ManagedWindow error if the given window_with_info is already managed by the window manager.
+    /// returns a ManagedWindow error if the given window_with_info is
+    /// already managed by the window manager.
     fn add_window(&mut self, window_with_info: WindowWithInfo) -> Result<(), Self::Error> {
         if !self.is_managed(window_with_info.window) {
             // All new added windows are set to minimised = false by default
@@ -371,13 +398,15 @@ impl WindowManager for MinimisingWM {
                 minimised: false,
             };
             if window_with_info.float_or_tile == FloatOrTile::Float {
-                // if there is a floating window, it is insert at the end of the vec
+                // if there is a floating window, it is insert at the end
+                // of the vec
                 self.windows.push(minimised_window);
                 let temp = self.windows.len() - 1;
                 self.index_foused_window = Some(temp);
             } else {
-                // if not, I get the index where the first floating window start and
-                // inser the tiled window there, also the geometries should be updated.
+                // if not, I get the index where the first floating window
+                // start and insert the tiled window there, also the
+                // geometries should be updated.
                 match self.get_partion_index() {
                     None => {
                         self.windows.push(minimised_window);
@@ -399,8 +428,10 @@ impl WindowManager for MinimisingWM {
 
     /// removes the given window from the window manager.
     ///
-    /// Every time that a element is removed the index_foused_window should be updated if it is necessary.
-    /// Important to noticy here is that when the focused element is the same as the removed element, no focused window is set.
+    /// Every time that a element is removed the index_foused_window should
+    /// be updated if it is necessary.
+    /// Important to noticy here is that when the focused element is the
+    /// same as the removed element, no focused window is set.
     fn remove_window(&mut self, window: Window) -> Result<(), Self::Error> {
         match self.windows.iter().position(|w| (*w).window == window) {
             None => Err(MinimisingWMError::UnknownWindow(window)),
@@ -425,8 +456,9 @@ impl WindowManager for MinimisingWM {
                             self.index_foused_window = None;
                             Ok(())
                         } else {
-                            // If the focused_element in the right side of the vector
-                            // the focused elemente is keep it, otherwise the focused
+                            // If the focused_element in the right side of
+                            // the vector the focused elemente is keep it,
+                            // otherwise the focused
                             // index is decreased by one.
                             let mut temp = index;
                             if index > i {
@@ -444,7 +476,8 @@ impl WindowManager for MinimisingWM {
 
     /// returns the layout of all managed windows.
     ///
-    /// The array is already order so, no need to rearrange the vector except when there is a focused floating window
+    /// The array is already order so, no need to rearrange the vector except
+    /// when there is a focused floating window
     ///
     /// Now this function hide the minised windows
     fn get_window_layout(&self) -> WindowLayout {
@@ -460,26 +493,34 @@ impl WindowManager for MinimisingWM {
             let temp_focused_window = match self.index_foused_window {
                 None => None,
                 Some(index) => {
-                    // unwrap() is used because the some(i) statement ensures at least one element
+                    // unwrap() is used because the some(i) statement
+                    // ensures at least one element
                     let window_type = self.windows.get(index).unwrap();
                     match self.get_partion_index() {
                         None => Some(self.windows.get(index).unwrap().window),
-                        // if a focused window is a floating one, then the temp_windows is reorder to
+                        // if a focused window is a floating one, then the
+                        // temp_windows is reorder to
                         // put the focused window at the very end of the vec
                         Some(partion_index) => {
                             if partion_index >= index &&
                                window_type.float_or_tile == FloatOrTile::Float {
-                                match temp_windows.iter().position(|w| (*w) == (window_type.window,window_type.geometry)) {
+                                match temp_windows.iter().position(|w| (*w)
+                                 == (window_type.window,window_type.geometry)
+                                 ) {
 										None => (),
 
 										Some(real_index) => {
-											let (temp_window,temp_geometry) = temp_windows.get(real_index).unwrap().clone();
+			let (temp_window,temp_geometry) = temp_windows.get(real_index).
+                                            unwrap().clone();
 											temp_windows.remove(real_index);
-											temp_windows.push((temp_window,temp_geometry));
+											temp_windows.push
+                                            ((temp_window, temp_geometry));
 										},
 									};
                             };
-                            // unwrap() is used because the some(partion_index) statement ensures at least one element
+                            // unwrap() is used because the
+                            // some(partion_index) statement ensures at
+                            // least one element
                             Some(self.windows.get(index).unwrap().window)
                         }
                     }
@@ -498,7 +539,8 @@ impl WindowManager for MinimisingWM {
 
     /// set the focused window in the window manager with the given window.
     ///
-    /// if the given window is minised, after focus_window succeeds, such windows is unminimised.
+    /// if the given window is minised, after focus_window succeeds,
+    /// such windows is unminimised.
     fn focus_window(&mut self, window: Option<Window>) -> Result<(), Self::Error> {
         match window {
             None => {
@@ -526,10 +568,12 @@ impl WindowManager for MinimisingWM {
 
     /// back/forth to the next window from the current focused window.
     ///
-    /// the iteration in this function is over the current order of the *windows* vec, that means that the client can jump over floating and tiled
-    /// windows if the order of *windows* vec is in such way.
+    /// the iteration in this function is over the current order of the
+    /// *windows* vec, that means that the client can jump over floating and
+    /// tiled windows if the order of *windows* vec is in such way.
     ///
-    /// if the next/previous windows is minised, after cycle_focus succeeds, such window is unminimised.
+    /// if the next/previous windows is minised, after cycle_focus succeeds,
+    /// such window is unminimised.
     fn cycle_focus(&mut self, dir: PrevOrNext) {
         if self.windows.len() > 1 {
             match self.index_foused_window {
@@ -568,9 +612,11 @@ impl WindowManager for MinimisingWM {
 
         match self.index_foused_window {
             Some(index) => {
-                // unwrap() is used because the some(index) statement ensures at least one element
+                // unwrap() is used because the some(index) statement ensures
+                // at least one element
                 let minimised_window = self.windows.get(index).unwrap().clone();
-                // I know that the given minised_window already exists in the manager
+                // I know that the given minised_window already exists in
+                // the manager
                 // no need to catch the output
                 self.remove_minimised_window(minimised_window.window);
             }
@@ -580,12 +626,14 @@ impl WindowManager for MinimisingWM {
 
     /// gets the complete current information of the given window.
     ///
-    /// If the given window is not managed by the window manager, UnknownWindow error is shown.
+    /// If the given window is not managed by the window manager,
+    /// UnknownWindow error is shown.
     fn get_window_info(&self, window: Window) -> Result<WindowWithInfo, Self::Error> {
         match self.windows.iter().position(|w| (*w).window == window) {
             None => Err(MinimisingWMError::UnknownWindow(window)),
             Some(i) => {
-                // unwrap() is used because the some(i) statement ensures at least one element
+                // unwrap() is used because the some(i) statement ensures
+                // at least one element
                 let minimised_window = self.windows.get(i).unwrap().clone();
                 let window_with_info = WindowWithInfo {
                     window: minimised_window.window,
@@ -605,7 +653,8 @@ impl WindowManager for MinimisingWM {
 
     /// set the given screen as new screen size.
     ///
-    /// The geometries should be updated accordingly with the new given screen.
+    /// The geometries should be updated accordingly with the new given
+    /// screen.
     fn resize_screen(&mut self, screen: Screen) {
         self.screen = screen;
         self.update_geometries()
@@ -614,9 +663,11 @@ impl WindowManager for MinimisingWM {
 
 
 impl TilingSupport for MinimisingWM {
-    /// if *windows* is not empty it returns the master window, otherwise return None.
+    /// if *windows* is not empty it returns the master window, otherwise
+    /// return None.
     ///
-    /// In this window manager the first tiled element of the *windows* vec is always the master window.
+    /// In this window manager the first tiled element of the *windows* vec
+    /// is always the master window.
     fn get_master_window(&self) -> Option<Window> {
         if !self.windows.is_empty() {
             match self.get_master_index() {
@@ -630,9 +681,11 @@ impl TilingSupport for MinimisingWM {
 
     /// swap the position of the given window with the master window.
     ///
-    /// This functions actually affects the order in which the windows were added, also the geomtries should be accordingly.
+    /// This functions actually affects the order in which the windows were
+    /// added, also the geomtries should be accordingly.
     ///
-    /// In case the given window is the master window  and the window master is not focused, the only effect of this funtions is
+    /// In case the given window is the master window  and the window master
+    /// is not focused, the only effect of this funtions is
     /// changing the focused windows to the master window.
     ///
     /// If the given window is minised, this funtion should unminimised it
@@ -640,7 +693,8 @@ impl TilingSupport for MinimisingWM {
         match self.windows.iter().position(|w| (*w).window == window) {
             None => Err(MinimisingWMError::UnknownWindow(window)),
             Some(window_index) => {
-                // unwrap() is used because the some(window_index) statement ensures at least one element
+                // unwrap() is used because the some(window_index) statement
+                // ensures at least one element
                 let minised_window = self.windows.get(window_index).unwrap().clone();
                 if minised_window.float_or_tile == FloatOrTile::Tile {
                     match self.get_master_index() {
@@ -662,13 +716,16 @@ impl TilingSupport for MinimisingWM {
     }
 
 
-    /// Simlar approach than cycle_focus, but now the Vec is affect, hence the order in which the windows were added is changed.
+    /// Simlar approach than cycle_focus, but now the Vec is affect,
+    /// hence the order in which the windows were added is changed.
     ///
-    /// If there is no focused window or if the number of tiled windows is less than 2 the funtion has no effects.
+    /// If there is no focused window or if the number of tiled windows
+    /// is less than 2 the funtion has no effects.
     ///
     /// If the PrevOrNext element is minised it is unminimised
     ///
-    /// After the sucessful swap, the geometries should be updated accordingly.
+    /// After the sucessful swap, the geometries should be updated
+    /// accordingly.
     fn swap_windows(&mut self, dir: PrevOrNext) {
         let tiled_non_minimised_windows = self.windows.len() - self.get_floating_windows().len() -
                                           self.get_minimised_tiled_windows().len();
@@ -678,7 +735,8 @@ impl TilingSupport for MinimisingWM {
                 None => (),
 
                 Some(index) => {
-                    // unwrap() is used because the some(index) statement ensures at least one element
+                    // unwrap() is used because the some(index) statement
+                    // ensures at least one element
                     if self.windows.get(index).unwrap().float_or_tile == FloatOrTile::Tile {
                         match dir {
                             PrevOrNext::Prev => {
@@ -723,9 +781,11 @@ impl TilingSupport for MinimisingWM {
 }
 
 impl FloatSupport for MinimisingWM {
-    /// return a vector that contains the floating windows managed by this window manager
+    /// return a vector that contains the floating windows managed by
+    /// this window manager
     ///
-    /// I have to iterate over the whole collection to filter out the non-floating windows.
+    /// I have to iterate over the whole collection to filter out the
+    /// non-floating windows.
     ///
     /// The minised and floating windows are filtered out too.
     fn get_floating_windows(&self) -> Vec<Window> {
@@ -742,17 +802,21 @@ impl FloatSupport for MinimisingWM {
     }
 
 
-    /// set the given window to a floating window if it was a tiled window or viceversa
+    /// set the given window to a floating window if it was a tiled window
+    /// or viceversa
     ///
-    /// if the given window was minised, after toggle_floating succeeds, such window should be unminimised
+    /// if the given window was minised, after toggle_floating succeeds,
+    /// such window should be unminimised
     ///
-    /// after the a sucessful toogle, the geometries of the tiled windows should be updated
+    /// after the a sucessful toogle, the geometries of the tiled windows
+    /// should be updated
     fn toggle_floating(&mut self, window: Window) -> Result<(), Self::Error> {
         match self.windows.iter().position(|w| (*w).window == window) {
             None => Err(MinimisingWMError::UnknownWindow(window)),
 
             Some(i) => {
-                // unwrap() is used because the some(i) statement ensures at least one element
+                // unwrap() is used because the some(i) statement ensures at
+                // least one element
                 let win_info = self.windows.get(i).unwrap().clone();
                 if win_info.minimised {
                     self.remove_minimised_window(win_info.window);
@@ -785,8 +849,10 @@ impl FloatSupport for MinimisingWM {
                     };
                     self.add_window(window_info).unwrap();
                 };
-                // after toogle the window, the geometries and the focused window should be updated if that it the case
-                // focus_window will always sucees since the window is already managed and it was removed in this toggle process
+                // after toogle the window, the geometries and the focused
+                // window should be updated if that it the case
+                // focus_window will always sucees since the window is
+                // already managed and it was removed in this toggle process
                 self.focus_window(focused_window).unwrap();
                 self.update_geometries();
                 Ok(())
@@ -794,10 +860,13 @@ impl FloatSupport for MinimisingWM {
         }
     }
 
-    /// set the given window to a floating window if it was a tiled window or viceversa
+    /// set the given window to a floating window if it was a tiled window
+    /// or viceversa
     ///
-    /// this function iterates over the windows until the given window is found, then if it is a floating window
-    /// the corresponding FloatingWindow structure is mutated, otherwise a NoFloatingWindow error is thrown.
+    /// this function iterates over the windows until the given window is
+    /// found, then if it is a floating window
+    /// the corresponding FloatingWindow structure is mutated, otherwise a
+    /// NoFloatingWindow error is thrown.
     ///
     /// if the given window is minised, it should be unminimised
     fn set_window_geometry(&mut self,
@@ -808,7 +877,8 @@ impl FloatSupport for MinimisingWM {
             None => Err(MinimisingWMError::UnknownWindow(window)),
 
             Some(i) => {
-                // it was already check that there is a window, so unwrap can be used
+                // it was already check that there is a window, so unwrap
+                // can be used
                 let window_min = self.windows.get(i).unwrap().clone();
 
                 if window_min.float_or_tile == FloatOrTile::Tile {
@@ -830,7 +900,8 @@ impl FloatSupport for MinimisingWM {
 impl MinimiseSupport for MinimisingWM {
     /// Returns a vector of all the minimised windows.
     ///
-    /// the order in which the vec is returned as the order in whih minised elements were minised
+    /// the order in which the vec is returned as the order in whih minised
+    // elements were minised
     fn get_minimised_windows(&self) -> Vec<Window> {
         self.minimised_windows.clone()
     }
@@ -975,7 +1046,8 @@ mod tests {
         assert_eq!(vec![1], wm.get_windows());
         // According to the window layout
         let wl3 = wm.get_window_layout();
-        // because the new behavior, window 1 should not be focused, No window is focused
+        // because the new behavior, window 1 should not be focused, No
+        // window is focused
         assert_eq!(None, wl3.focused_window);
         // and fullscreen.
         assert_eq!(vec![(1, SCREEN_GEOM)], wl3.windows);
@@ -1007,7 +1079,8 @@ mod tests {
             width: 400,
             height: 150,
         };
-        // I add more window, which shoudl be allocated in the right side of the window
+        // I add more window, which shoudl be allocated in the right side
+        // of the window
         wm.add_window(WindowWithInfo::new_tiled(3, SOME_GEOM)).unwrap();
         wm.add_window(WindowWithInfo::new_tiled(4, SOME_GEOM)).unwrap();
         wm.add_window(WindowWithInfo::new_tiled(5, SOME_GEOM)).unwrap();
@@ -1037,14 +1110,16 @@ mod tests {
         wm.add_window(WindowWithInfo::new_tiled(4, SOME_GEOM)).unwrap();
         wm.add_window(WindowWithInfo::new_tiled(5, SOME_GEOM)).unwrap();
 
-        // Now an action should be applied, when None is given to focus_window the current focused window should be unfocused.
+        // Now an action should be applied, when None is given to
+        // focus_window the current focused window should be unfocused.
         wm.focus_window(None).unwrap();
 
         // Focused window should return None
         let wl1 = wm.get_window_layout();
         assert_eq!(None, wl1.focused_window);
 
-        // Window 10 is not in manager an UnknownWindow error should be thrown
+        // Window 10 is not in manager an UnknownWindow error should be
+        // thrown
         assert!(wm.focus_window(Some(10)).is_err());
 
         // Focus to window 4
@@ -1065,7 +1140,8 @@ mod tests {
         wm.remove_window(5).unwrap();
         wm.focus_window(Some(1)).unwrap();
         wm.remove_window(1).unwrap();
-        // Because the last focused window was removed, the focused_window attribute should be None
+        // Because the last focused window was removed, the focused_window
+        // attribute should be None
         let wl5 = wm.get_window_layout();
         assert_eq!(None, wl5.focused_window);
     }
@@ -1121,7 +1197,8 @@ mod tests {
         let wl6 = wm.get_window_layout();
         assert_eq!(Some(6), wl6.focused_window);
 
-        // Now previous should be 5, since that was the last tiled window before adding 6
+        // Now previous should be 5, since that was the last tiled window
+        // before adding 6
         wm.cycle_focus(PrevOrNext::Prev);
         let wl7 = wm.get_window_layout();
         assert_eq!(Some(5), wl7.focused_window);
@@ -1141,8 +1218,9 @@ mod tests {
         wm.add_window(WindowWithInfo::new_tiled(6, SOME_GEOM)).unwrap();
 
 
-        // All screens should have different size, since now we are dealing with
-        // tiled funtions, it should be reflec since they are added, removed or toggled
+        // All screens should have different size, since now we are dealing
+        // with tiled funtions, it should be reflec since they are added,
+        // removed or toggled
 
         let master_half = Geometry {
             x: 0,
@@ -1215,14 +1293,16 @@ mod tests {
         let wl1 = wm.get_window_layout();
         assert_eq!(Some(4), wl1.focused_window);
 
-        // swapping from master to master, no swap action is taken. Focused window is changed, though.
+        // swapping from master to master, no swap action is taken. Focused
+        // window is changed, though.
 
         wm.swap_with_master(1).unwrap();
         let wl2 = wm.get_window_layout();
 
         assert_eq!(Some(1), wl2.focused_window);
 
-        // swapping from master to window 3, now window 3 is master window and is focused
+        // swapping from master to window 3, now window 3 is master window
+        // and is focused
         wm.swap_with_master(3).unwrap();
         let wl3 = wm.get_window_layout();
         assert_eq!(Some(3), wm.get_master_window());
@@ -1232,8 +1312,10 @@ mod tests {
         // Traying to swap from master to an unknown window, erro is thrown
         assert!(wm.swap_with_master(10).is_err());
 
-        // Since previously I used  swap_with_master the collection was updated to [3,2,1,4], where 3 is the master window
-        // using swap_windows(PrevOrNext::Prev) should be allocate windows 4 as master window and put window 3 in the bottom right corner
+        // Since previously I used  swap_with_master the collection was
+        // updated to [3,2,1,4], where 3 is the master window
+        // using swap_windows(PrevOrNext::Prev) should be allocate windows
+        // 4 as master window and put window 3 in the bottom right corner
         // of the window. Moreover windows 3 should be focused.
         let master_half = Geometry {
             x: 0,
@@ -1275,7 +1357,8 @@ mod tests {
         assert_eq!(vec![(4, master_half), (2, first_half), (1, second_half), (3, third_half)],
                    wl4.windows);
 
-        // I change focused to master window and apply swap_windows(PrevOrNext::Next), the result should be window 2 as
+        // I change focused to master window and apply
+        // swap_windows(PrevOrNext::Next), the result should be window 2 as
         // master window while windows 4 is focused
         wm.focus_window(Some(4)).unwrap();
         wm.swap_windows(PrevOrNext::Next);
@@ -1285,20 +1368,20 @@ mod tests {
         assert_eq!(vec![(2, master_half), (4, first_half), (1, second_half), (3, third_half)],
                    wl5.windows);
 
-        // **Invariant**: if `swap_with_master(w)` succeeds, `get_master_window()
-        // == Some(w)`.
+        // **Invariant**: if `swap_with_master(w)` succeeds,
+        // `get_master_window() == Some(w)`.
         wm.swap_with_master(1).unwrap();
         assert_eq!(wm.get_master_window(), Some(1));
 
-        // **Invariant**: `get_master_window() == Some(w)`, then `w` must occur
-        // in the vector returned by `get_windows()`.
+        // **Invariant**: `get_master_window() == Some(w)`, then `w`
+        // must occur in the vector returned by `get_windows()`.
 
         let master_window = wm.get_master_window().unwrap();
         let windows = wm.get_windows();
         assert!(windows.contains(&master_window));
 
-        // **Invariant**: if the vector returned by `get_windows()` is empty =>
-        // `get_master_window() == None`.
+        // **Invariant**: if the vector returned by `get_windows()`
+        // is empty => `get_master_window() == None`.
         wm.remove_window(2).unwrap();
         wm.remove_window(3).unwrap();
         wm.remove_window(4).unwrap();
@@ -1308,8 +1391,8 @@ mod tests {
         assert_eq!(wm.get_master_window(), None);
 
         // The other direction of the arrow must
-        // not hold, e.g., there could floating windows (see `FloatSupport`), but
-        // no tiled windows.
+        // not hold, e.g., there could floating windows
+        // (see `FloatSupport`), but no tiled windows.
         wm.add_window(WindowWithInfo::new_float(90, SOME_GEOM)).unwrap();
         wm.add_window(WindowWithInfo::new_float(80, SOME_GEOM)).unwrap();
         assert_eq!(wm.get_master_window(), None);
@@ -1338,7 +1421,8 @@ mod tests {
         wm.toggle_floating(1).unwrap();
         wm.toggle_floating(5).unwrap();
 
-        // the order of the vector changed to [2,3,4,1,5], where 4 and 1 are floating windows
+        // the order of the vector changed to [2,3,4,1,5], where 4 and 1 are
+        // floating windows
         assert_eq!(vec![4, 1, 5], wm.get_floating_windows());
 
         // focused should remind to the last window added, 5
@@ -1349,10 +1433,12 @@ mod tests {
         wm.toggle_floating(5).unwrap();
         wm.focus_window(Some(4)).unwrap();
 
-        // now let check the layout, where tiled windows should be at the begining of the vec while floating elements
-        // should at the last, both floating elements should have SOME_GEOM as geometry.
-        // The remining elements should have a proper geometry depending in its position and focused floating element should be the
-        // last element [2,3,5,1,4]
+        // now let check the layout, where tiled windows should be at the
+        // begining of the vec while floating elements
+        // should at the last, both floating elements should have
+        // SOME_GEOM as geometry. The remining elements should have a proper
+        // geometry depending in its position and focused floating element
+        // should be the last element [2,3,5,1,4]
         let master_half = Geometry {
             x: 0,
             y: 0,
@@ -1382,7 +1468,8 @@ mod tests {
                         (4, SOME_GEOM)],
                    wl1.windows);
 
-        // now let's change the geometry of a titled window, an error should be occur
+        // now let's change the geometry of a titled window, an error should
+        // be occur
         assert!((wm.set_window_geometry(2, SCREEN_GEOM)).is_err());
 
 
@@ -1398,7 +1485,8 @@ mod tests {
                         (4, SCREEN_GEOM)],
                    wl2.windows);
 
-        // now we use toggle_floating again in window 1, allocated at the end of the tiled windows.
+        // now we use toggle_floating again in window 1, allocated at the
+        // end of the tiled windows.
         // The appropiate modification of the entire tiled layout should be
         // reflected
         // the focuse element should remind as 4
@@ -1434,30 +1522,31 @@ mod tests {
                    wl3.windows);
         assert_eq!(Some(4), wl3.focused_window);
 
-        // **Invariant**: if `is_floating(w) == true` for some window `w`, then
-        // `is_managed(w) == true`.
+        // **Invariant**: if `is_floating(w) == true` for some window `w`,
+        // then `is_managed(w) == true`.
         assert_eq!(wm.is_floating(4), true);
         assert_eq!(wm.is_managed(4), true);
 
-        // **Invariant**: `is_floating(w) == true` for some window `w`, iff the
-        // vector returned by the `get_floating_windows` method contains `w`.
+        // **Invariant**: `is_floating(w) == true` for some window `w`,
+        // iff the vector returned by the `get_floating_windows` method
+        // contains `w`.
         assert_eq!(wm.is_floating(4), true);
         assert_eq!(vec![4], wm.get_floating_windows());
 
-        // **Invariant**: if calling `toggle_floating(w)` with a tiled window `w`
-        // succeeds, `is_floating(w)` must return `true`.
+        // **Invariant**: if calling `toggle_floating(w)` with a tiled
+        // window `w` succeeds, `is_floating(w)` must return `true`.
         assert_eq!(wm.is_floating(1), false);
         wm.toggle_floating(1).unwrap();
         assert_eq!(wm.is_floating(1), true);
 
-        // **Invariant**: if calling `toggle_floating(w)` with a floating window
-        // `w` succeeds, `is_floating(w)` must return `false`.
+        // **Invariant**: if calling `toggle_floating(w)` with a floating
+        // window `w` succeeds, `is_floating(w)` must return `false`.
         assert_eq!(wm.is_floating(4), true);
         wm.toggle_floating(4).unwrap();
         assert_eq!(wm.is_floating(4), false);
 
-        // **Invariant**: the result of `is_floating(w)` must be the same before
-        // and after calling `toggle_floating(w)` twice.
+        // **Invariant**: the result of `is_floating(w)` must be the same
+        // before and after calling `toggle_floating(w)` twice.
         assert_eq!(wm.is_floating(5), false);
         wm.toggle_floating(5).unwrap();
         wm.toggle_floating(5).unwrap();
@@ -1493,7 +1582,8 @@ mod tests {
         wm.toggle_minimised(1).unwrap();
         wm.toggle_minimised(4).unwrap();
 
-        // we have some minimised_windows, the array is given in the order the windows were minimised
+        // we have some minimised_windows, the array is given in the order
+        // the windows were minimised
         assert_eq!(vec![5, 1, 4], wm.get_minimised_windows());
 
 
@@ -1502,7 +1592,8 @@ mod tests {
         assert_eq!(true, wm.is_minimised(4));
         assert_eq!(wm.get_window_info(3).unwrap().geometry, master_half);
 
-        // the window layout shows window 2 and 3 and 6, where 2 is floating and 3, 6 are tiled
+        // the window layout shows window 2 and 3 and 6, where 2 is floating
+        // and 3, 6 are tiled
         let master_half = Geometry {
             x: 0,
             y: 0,
@@ -1524,7 +1615,7 @@ mod tests {
         // window 6 remains as the focused window
         assert_eq!(Some(6), wl1.focused_window);
 
-        //  **Invariant**: if calling `toggle_minimised(w)` with an unminimised
+        // **Invariant**: if calling `toggle_minimised(w)` with an unminimised
         // window `w` succeeds, `w` may no longer be visible according to
         // `get_window_layout` and `is_minimised(w)` must return `true`.
         wm.toggle_minimised(6).unwrap();
@@ -1543,13 +1634,14 @@ mod tests {
         assert_eq!(wm.is_minimised(1), false);
 
 
-        // **Invariant**: if `is_minimised(w) == true` for some window `w`, then
-        // `is_managed(w) == true`.
+        // **Invariant**: if `is_minimised(w) == true` for some window `w`,
+        // then `is_managed(w) == true`.
         assert_eq!(wm.is_minimised(5), true);
         assert_eq!(wm.is_managed(5), true);
 
-        // **Invariant**: `is_minimised(w) == true` for some window `w`, iff the
-        // vector returned by the `get_minimised_windows` method contains `w`.
+        // **Invariant**: `is_minimised(w) == true` for some window `w`,
+        // iff the vector returned by the `get_minimised_windows`
+        // method contains `w`.
         assert_eq!(wm.is_minimised(5), true);
         assert_eq!(vec![5, 4, 6], wm.get_minimised_windows());
     }

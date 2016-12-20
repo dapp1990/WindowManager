@@ -26,12 +26,16 @@
 //!
 //! ## General approach
 //!
-//! To keep track of the focused element I added a boolean attribute to the structure, in that way I can
+//! To keep track of the focused element I added a boolean attribute to the
+//! structure, in that way I can
 //! "hide" the windows whenever the focus_window is set with None
 //!
-//! It is convenient to store the complete WindowWithInfo instead of the Window, so the given function implementations were updated.
+//! It is convenient to store the complete WindowWithInfo instead of the
+//! Window, so the given function implementations were updated.
 //!
-//! Finally, for the cycle_focus is more useful if one can push front/back and pop back/front (double-ended queue) to handle the rotation of the vec in order
+//! Finally, for the cycle_focus is more useful if one can push front/back
+//! and pop back/front (double-ended queue) to handle the rotation of the
+//! vec in order
 //! to change the focused window, so a VecDeque is used instead of Vec
 //!
 
@@ -49,8 +53,8 @@ pub type WMName = FullscreenWM;
 /// The FullscreenWM struct
 #[derive(RustcDecodable, RustcEncodable, Debug, Clone)]
 pub struct FullscreenWM {
-    /// A vector of WindowWithInfo, the first one is on the bottom, the last one is
-    /// on top, and also the only visible window.
+    /// A vector of WindowWithInfo, the first one is on the bottom, the last
+    /// one is on top, and also the only visible window.
     pub windows: VecDeque<WindowWithInfo>,
     /// The size of the screen
     pub screen: Screen,
@@ -63,7 +67,8 @@ pub struct FullscreenWM {
 impl FullscreenWM {
     /// This method calculated the geometries of windows.
     ///
-    /// This is a naive implementation since all windows in this window manager has the same size.
+    /// This is a naive implementation since all windows in this window
+    /// manager has the same size.
     fn update_geometries(&mut self) {
         for full_screen_window in self.windows.iter_mut() {
             full_screen_window.geometry = self.screen.to_geometry();
@@ -119,8 +124,8 @@ impl WindowManager for FullscreenWM {
     fn get_windows(&self) -> Vec<Window> {
         // I create a new vec, which temporally saves the window elements
         let mut temp_windows = Vec::new();
-        // I iterate over WindowManager to get *window_with_info*s to obtain the
-        // window which will be stored in temp_windows.
+        // I iterate over WindowManager to get *window_with_info*s to obtain
+        // the window which will be stored in temp_windows.
         for window_with_info in self.windows.iter() {
             temp_windows.push(window_with_info.window.clone());
         }
@@ -130,7 +135,8 @@ impl WindowManager for FullscreenWM {
 
     /// gets the current focused window
     ///
-    /// If list is not empty and focused=true I get the last element focused window, otherwise None
+    /// If list is not empty and focused=true I get the last element focused
+    /// window, otherwise None
     fn get_focused_window(&self) -> Option<Window> {
         if !self.windows.is_empty() || !self.focused {
             // I use unwrap() because the if test ensure that *windows* has
@@ -150,7 +156,8 @@ impl WindowManager for FullscreenWM {
 
     /// adds new window_with_info to the vec windows
     ///
-    /// returns an ManagedWindow error if the given window_with_info is already managed by the window manager
+    /// returns an ManagedWindow error if the given window_with_info is
+    /// already managed by the window manager
     fn add_window(&mut self, window_with_info: WindowWithInfo) -> Result<(), Self::Error> {
         if !self.is_managed(window_with_info.window) {
             let fullscreen_window = WindowWithInfo {
@@ -180,13 +187,16 @@ impl WindowManager for FullscreenWM {
         }
     }
 
-    /// returns the layout of the visible windows, in this case the focused window
+    /// returns the layout of the visible windows, in this case the focused
+    /// window
     ///
-    /// if there is an empty vec or the focused = false (hidden windows) it is return an new WindowLayout
+    /// if there is an empty vec or the focused = false (hidden windows) it
+    /// is return an new WindowLayout
     fn get_window_layout(&self) -> WindowLayout {
         if !self.windows.is_empty() || !self.focused {
             let last_index = self.windows.len() - 1;
-            // I used unwrap because it is already tested that there is at least one element in Vec
+            // I used unwrap because it is already tested that there is at
+            // least one element in Vec
             let window_with_info = self.windows.get(last_index).unwrap();
 
             WindowLayout {
@@ -200,7 +210,8 @@ impl WindowManager for FullscreenWM {
 
     /// set the focused window in the window manager with the given window
     ///
-    /// the function uses the remove_window and add_window as subroutines. As a consequence,
+    /// the function uses the remove_window and add_window as subroutines.
+    /// As a consequence,
     /// the order in which the windows were added can be changed.
     fn focus_window(&mut self, window: Option<Window>) -> Result<(), Self::Error> {
         // First I check if the given *window* is either a window or a None
@@ -211,20 +222,22 @@ impl WindowManager for FullscreenWM {
             Some(gw) => {
 
                 // By default *remove_window* only removes *window_with_info*
-                // without returns it, so a sliglty modification of that method
-                // is done.
+                // without returns it, so a sliglty modification of that
+                // method is done.
                 // Now the *window_with_info* element is temporally stored
                 match self.windows.iter().position(|w| (*w).window == gw) {
                     None => Err(FullscreenWMError::UnknownWindow(gw)),
                     Some(i) => {
-                        // we get a copy of the actually *window_with_info* that is
-                        // in *windows*, we used unwrap() here because we are already
+                        // we get a copy of the actually *window_with_info* t
+                        // hat is
+                        // in *windows*, we used unwrap() here because we are
+                        // already
                         // tested that the actual structure exists
                         let window_with_info = self.windows.get(i).unwrap().clone();
                         // the given window is removed
                         self.remove_window(window_with_info.window).unwrap();
-                        // Fortunatly, *add_window* can helps us out to add the
-                        // *window_with_info*
+                        // Fortunatly, *add_window* can helps us out to add
+                        // the *window_with_info*
                         self.add_window(window_with_info)
                     }
                 }
@@ -234,19 +247,25 @@ impl WindowManager for FullscreenWM {
 
     /// back/forth to the next window from the current focused window.
     ///
-    /// If there is no focused window, nothing is focused since that implies an empty windows vec.
+    /// If there is no focused window, nothing is focused since that implies
+    /// an empty windows vec.
     fn cycle_focus(&mut self, dir: PrevOrNext) {
-        // I take advantage of the new structure, so I use pop_back() and push_front()
+        // I take advantage of the new structure, so I use pop_back()
+        // and push_front()
         // for prev action and  pop_front() and push_back() for next action
-        // condition when *windows* is empty or a singleton is covered with a naive
-        // if statement. Focus *window* by definition is always the last element, no
+        // condition when *windows* is empty or a singleton is covered with
+        // a naive
+        // if statement. Focus *window* by definition is always the last
+        // element, no
         // need to test whether there is a focus *window* when *windows* is a
         // singleton, the only *window* is always focus.
-        // cycle_focuse allow to focused_window an element if previously was not a focused window
+        // cycle_focuse allow to focused_window an element if previously was
+        // not a focused window
         self.focused = true;
         if self.windows.len() > 1 {
             match dir {
-                // I use unwrap() because we already test that *windows* is not empty
+                // I use unwrap() because we already test that *windows* is
+                // not empty
                 PrevOrNext::Prev => {
                     let temp = self.windows.pop_back().unwrap();
                     self.windows.push_front(temp);
@@ -262,10 +281,13 @@ impl WindowManager for FullscreenWM {
 
     /// gets the complete current information of the given window.
     ///
-    /// If the given window is not managed by the window manager, UnknownWindow error is shown
+    /// If the given window is not managed by the window manager, U
+    /// nknownWindow error is shown
     fn get_window_info(&self, window: Window) -> Result<WindowWithInfo, Self::Error> {
-        // Since now *windows* stores the whole *window_with_info*, I only iterate
-        // over, found the corresponding *window* and return the *window_with_info*,
+        // Since now *windows* stores the whole *window_with_info*, I only
+        // iterate
+        // over, found the corresponding *window* and return the
+        // *window_with_info*,
         // otherwise an *UnknownWindow* error is thrown.
         match self.windows.iter().position(|w| (*w).window == window) {
             None => Err(FullscreenWMError::UnknownWindow(window)),
@@ -401,9 +423,11 @@ mod tests {
         wm.add_window(WindowWithInfo::new_tiled(4, SOME_GEOM)).unwrap();
         wm.add_window(WindowWithInfo::new_tiled(5, SOME_GEOM)).unwrap();
 
-        // Now an action should be applied, even when it given in this wm if the vec windows is not empty
+        // Now an action should be applied, even when it given in this wm if
+        // the vec windows is not empty
         // it must hold that there is a focused window.
-        // The only way in which no focused window exists is when there is no widnows
+        // The only way in which no focused window exists is when there is no
+        // widnows
         wm.focus_window(None).unwrap();
 
         // Focused window should return 5
@@ -431,7 +455,8 @@ mod tests {
         wm.remove_window(5).unwrap();
         wm.focus_window(Some(1)).unwrap();
         wm.remove_window(1).unwrap();
-        // Because the last focused window was removed, the focused_window attribute should be the second botton element
+        // Because the last focused window was removed, the focused_window
+        // attribute should be the second botton element
         // in this case window 2
         let wl5 = wm.get_window_layout();
         assert_eq!(Some(2), wl5.focused_window);
@@ -488,7 +513,8 @@ mod tests {
         let wl6 = wm.get_window_layout();
         assert_eq!(Some(6), wl6.focused_window);
 
-        // Now focus should previous should be 2, since was 6 was added at the bottom of the vec, then it was added when the vec
+        // Now focus should previous should be 2, since was 6 was added at
+        // the bottom of the vec, then it was added when the vec
         // has a the following order [3,4,5,1,2]
         wm.cycle_focus(PrevOrNext::Prev);
         let wl7 = wm.get_window_layout();
