@@ -300,7 +300,8 @@ pub fn main() {
             backend.get_wm_mut().swap_windows(PrevOrNext::Next);
             Ok(())
         },
-        // Swap with the previous window
+        // Swap with the previous window *Previous commands executed are display instead 
+        // of swap with the previous window
         (Super - XK_p) => |backend| {
             backend.get_wm_mut().swap_windows(PrevOrNext::Prev);
             Ok(())

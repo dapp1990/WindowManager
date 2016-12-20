@@ -1321,7 +1321,7 @@ mod tests {
         assert_eq!(Some(3), wm.get_focused_window());
 
         /// * iterating over floating windows **
-        /// focused window 4
+        // focused window 4
         wm.cycle_focus(PrevOrNext::Next);
         assert_eq!(Some(4), wm.get_focused_window());
 
@@ -1360,7 +1360,7 @@ mod tests {
         assert_eq!(Some(1), wm.get_focused_window());
 
         /// * iterating over floating windows **
-        /// focused window 7
+        // focused window 7
         wm.cycle_focus(PrevOrNext::Prev);
         assert_eq!(Some(7), wm.get_focused_window());
 
@@ -1377,7 +1377,7 @@ mod tests {
         assert_eq!(Some(4), wm.get_focused_window());
 
         /// * return to the initial focused window **
-        /// focused window 3
+        // focused window 3
         wm.cycle_focus(PrevOrNext::Prev);
         assert_eq!(Some(3), wm.get_focused_window());
 
